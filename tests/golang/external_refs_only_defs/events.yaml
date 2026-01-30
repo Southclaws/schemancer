@@ -1,0 +1,16 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+$defs:
+  EventPayload:
+    type: object
+    required: ["event_type", "data"]
+    properties:
+      event_type:
+        $ref: "#/$defs/EventType"
+      data:
+        type: object
+  EventType:
+    type: string
+    enum:
+      - "thread_published"
+      - "thread_unpublished"
+      - "thread_updated"

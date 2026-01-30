@@ -1,0 +1,59 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: ReservedKeywords
+description: Test Go reserved keywords as property names
+$defs:
+  GoKeywords:
+    type: object
+    properties:
+      type:
+        type: string
+      func:
+        type: string
+      map:
+        type: object
+      chan:
+        type: string
+      interface:
+        type: string
+      struct:
+        type: string
+      package:
+        type: string
+      import:
+        type: string
+      var:
+        type: string
+      const:
+        type: string
+      return:
+        type: string
+      break:
+        type: string
+      continue:
+        type: string
+      for:
+        type: string
+      if:
+        type: string
+      else:
+        type: string
+      switch:
+        type: string
+      case:
+        type: string
+      default:
+        type: string
+      go:
+        type: string
+      select:
+        type: string
+      defer:
+        type: string
+      range:
+        type: string
+      fallthrough:
+        type: string
+    required:
+      - type
+      - func
+      - map

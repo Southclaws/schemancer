@@ -1,0 +1,176 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: AllTypes
+description: Test all JSON Schema types and formats
+$defs:
+  AllPrimitives:
+    type: object
+    properties:
+      stringField:
+        type: string
+      integerField:
+        type: integer
+      numberField:
+        type: number
+      booleanField:
+        type: boolean
+      nullField:
+        type: "null"
+
+  StringFormats:
+    type: object
+    properties:
+      dateTime:
+        type: string
+        format: date-time
+      date:
+        type: string
+        format: date
+      time:
+        type: string
+        format: time
+      duration:
+        type: string
+        format: duration
+      email:
+        type: string
+        format: email
+      idnEmail:
+        type: string
+        format: idn-email
+      hostname:
+        type: string
+        format: hostname
+      idnHostname:
+        type: string
+        format: idn-hostname
+      ipv4:
+        type: string
+        format: ipv4
+      ipv6:
+        type: string
+        format: ipv6
+      uri:
+        type: string
+        format: uri
+      uriReference:
+        type: string
+        format: uri-reference
+      iri:
+        type: string
+        format: iri
+      iriReference:
+        type: string
+        format: iri-reference
+      uuidFormat:
+        type: string
+        format: uuid
+      uriTemplate:
+        type: string
+        format: uri-template
+      jsonPointer:
+        type: string
+        format: json-pointer
+      relativeJsonPointer:
+        type: string
+        format: relative-json-pointer
+      regex:
+        type: string
+        format: regex
+
+  NumberConstraints:
+    type: object
+    properties:
+      positiveInt:
+        type: integer
+        minimum: 0
+      negativeInt:
+        type: integer
+        maximum: 0
+      rangeInt:
+        type: integer
+        minimum: 1
+        maximum: 100
+      multipleOf:
+        type: integer
+        multipleOf: 5
+      exclusiveRange:
+        type: number
+        exclusiveMinimum: 0
+        exclusiveMaximum: 1
+
+  StringConstraints:
+    type: object
+    properties:
+      shortString:
+        type: string
+        maxLength: 10
+      longString:
+        type: string
+        minLength: 100
+      fixedLength:
+        type: string
+        minLength: 5
+        maxLength: 5
+      patternString:
+        type: string
+        pattern: "^[a-z]+$"
+
+  ArrayVariants:
+    type: object
+    properties:
+      stringArray:
+        type: array
+        items:
+          type: string
+      intArray:
+        type: array
+        items:
+          type: integer
+      objectArray:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+      nestedArray:
+        type: array
+        items:
+          type: array
+          items:
+            type: number
+      mixedArray:
+        type: array
+      uniqueArray:
+        type: array
+        items:
+          type: string
+        uniqueItems: true
+      boundedArray:
+        type: array
+        items:
+          type: string
+        minItems: 1
+        maxItems: 10
+
+  MapVariants:
+    type: object
+    properties:
+      stringMap:
+        type: object
+        additionalProperties:
+          type: string
+      intMap:
+        type: object
+        additionalProperties:
+          type: integer
+      objectMap:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            value:
+              type: string
+      anyMap:
+        type: object
+        additionalProperties: true

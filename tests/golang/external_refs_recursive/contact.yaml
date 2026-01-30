@@ -1,0 +1,15 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: Contact
+$defs:
+  ContactInfo:
+    type: object
+    properties:
+      email:
+        type: string
+        format: email
+      phone:
+        type: string
+      address:
+        $ref: "./address.yaml#/$defs/Address"
+    required:
+      - email

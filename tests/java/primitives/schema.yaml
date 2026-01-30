@@ -1,0 +1,50 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: PrimitiveTests
+$defs:
+  AllPrimitives:
+    type: object
+    required:
+      - stringField
+      - intField
+      - floatField
+      - boolField
+    properties:
+      stringField:
+        type: string
+      intField:
+        type: integer
+      floatField:
+        type: number
+      boolField:
+        type: boolean
+      optionalString:
+        type: string
+      optionalInt:
+        type: integer
+      optionalFloat:
+        type: number
+      optionalBool:
+        type: boolean
+
+  FormattedTypes:
+    type: object
+    required:
+      - id
+      - createdAt
+      - email
+    properties:
+      id:
+        type: string
+        format: uuid
+      createdAt:
+        type: string
+        format: date-time
+      birthDate:
+        type: string
+        format: date
+      email:
+        type: string
+        format: email
+      website:
+        type: string
+        format: uri

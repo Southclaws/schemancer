@@ -1,0 +1,12 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: Country
+type: object
+required:
+  - code
+  - name
+properties:
+  code:
+    type: string
+    description: ISO 3166-1 alpha-2 country code
+  name:
+    type: string

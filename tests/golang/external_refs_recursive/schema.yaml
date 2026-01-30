@@ -1,0 +1,19 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: Article
+type: object
+properties:
+  id:
+    type: string
+    format: uuid
+  title:
+    type: string
+  author:
+    $ref: "./models.yaml#/$defs/Author"
+  coAuthors:
+    type: array
+    items:
+      $ref: "./models.yaml#/$defs/Author"
+required:
+  - id
+  - title
+  - author

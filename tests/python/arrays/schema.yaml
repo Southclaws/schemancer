@@ -1,0 +1,43 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: ArrayTests
+$defs:
+  StringArray:
+    type: array
+    items:
+      type: string
+
+  IntArray:
+    type: array
+    items:
+      type: integer
+
+  NestedArray:
+    type: array
+    items:
+      type: array
+      items:
+        type: number
+
+  ObjectArray:
+    type: array
+    items:
+      type: object
+      properties:
+        id:
+          type: string
+        value:
+          type: integer
+      required:
+        - id
+
+  MixedContainer:
+    type: object
+    properties:
+      strings:
+        $ref: "#/$defs/StringArray"
+      numbers:
+        $ref: "#/$defs/IntArray"
+      nested:
+        $ref: "#/$defs/NestedArray"
+      objects:
+        $ref: "#/$defs/ObjectArray"

@@ -1,0 +1,57 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: SpecialChars
+description: Test special characters in names
+$defs:
+  WeirdNames:
+    type: object
+    properties:
+      "with-dashes":
+        type: string
+      "with_underscores":
+        type: string
+      "with spaces":
+        type: string
+      "123startsWithNumber":
+        type: string
+      "ALLCAPS":
+        type: string
+      "camelCase":
+        type: string
+      "PascalCase":
+        type: string
+      "snake_case_name":
+        type: string
+      "kebab-case-name":
+        type: string
+      "MixedWith123Numbers456":
+        type: string
+      "a":
+        type: string
+      "ab":
+        type: string
+      "ABC":
+        type: string
+      "XMLHttpRequest":
+        type: string
+      "getHTTPResponse":
+        type: string
+      "parseJSON":
+        type: string
+      "$dollarSign":
+        type: string
+      "$$doubleDollar":
+        type: string
+      "@atSign":
+        type: string
+      "#hashTag":
+        type: string
+
+  NumberPrefixed:
+    type: object
+    properties:
+      "1field":
+        type: string
+      "2nd_field":
+        type: string
+      "3rdField":
+        type: integer

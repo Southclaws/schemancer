@@ -1,0 +1,47 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: User
+type: object
+required:
+  - id
+  - name
+  - email
+properties:
+  id:
+    $ref: "#/$defs/UserID"
+  name:
+    $ref: "#/$defs/Name"
+  email:
+    $ref: "#/$defs/Email"
+  age:
+    $ref: "#/$defs/Age"
+  balance:
+    $ref: "#/$defs/Money"
+  isActive:
+    $ref: "#/$defs/Flag"
+
+$defs:
+  UserID:
+    type: string
+    format: uuid
+    description: Unique identifier for a user.
+
+  Name:
+    type: string
+    description: A person's name.
+
+  Email:
+    type: string
+    format: email
+    description: An email address.
+
+  Age:
+    type: integer
+    description: Age in years.
+
+  Money:
+    type: number
+    description: A monetary amount.
+
+  Flag:
+    type: boolean
+    description: A boolean flag.

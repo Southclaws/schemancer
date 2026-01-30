@@ -1,0 +1,20 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: IntEnumTest
+$defs:
+  HttpStatus:
+    type: integer
+    enum: [200, 201, 400, 404, 500]
+
+  Priority:
+    type: integer
+    enum: [1, 2, 3]
+
+  Response:
+    type: object
+    required:
+      - status
+    properties:
+      status:
+        $ref: "#/$defs/HttpStatus"
+      priority:
+        $ref: "#/$defs/Priority"

@@ -1,0 +1,16 @@
+golang:
+  output: "generated/golang/"
+  package: "multi"
+
+typescript:
+  output: "generated/typescript/"
+
+typescript-zod:
+  output: "generated/typescript-zod/"
+
+java:
+  output: "generated/java/"
+  package: "multi"
+
+python:
+  output: "generated/python/"

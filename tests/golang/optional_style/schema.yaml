@@ -1,0 +1,64 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: Person
+type: object
+required:
+  - name
+  - roles
+properties:
+  name:
+    type: string
+  age:
+    type: integer
+  email:
+    type: string
+  active:
+    type: boolean
+  # Optional nested object
+  address:
+    type: object
+    properties:
+      street:
+        type: string
+      city:
+        type: string
+      zip:
+        type: string
+    required:
+      - street
+      - city
+  # Optional array of strings
+  tags:
+    type: array
+    items:
+      type: string
+  # Optional array of objects
+  friends:
+    type: array
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+        since:
+          type: string
+          format: date-time
+      required:
+        - name
+  # Optional map
+  metadata:
+    type: object
+    additionalProperties:
+      type: string
+  # Required array (should NOT be optional)
+  roles:
+    type: array
+    items:
+      type: string
+  # Optional with format
+  birthday:
+    type: string
+    format: date
+  # Optional uuid
+  referralCode:
+    type: string
+    format: uuid

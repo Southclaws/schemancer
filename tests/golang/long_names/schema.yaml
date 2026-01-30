@@ -1,0 +1,30 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: LongNames
+description: Test very long type and property names
+$defs:
+  ThisIsAnExtremelyLongTypeNameThatShouldStillWorkCorrectlyInTheCodeGenerator:
+    type: object
+    properties:
+      thisIsAlsoAnExtremelyLongPropertyNameThatShouldBeHandledProperly:
+        type: string
+      anotherVeryLongPropertyNameWithLotsOfWordsInItThatKeepsGoingAndGoing:
+        type: integer
+      yetAnotherIncrediblyLongPropertyNameThatTestsTheLimitsOfTheGenerator:
+        type: boolean
+
+  Container:
+    type: object
+    properties:
+      shortName:
+        type: string
+      theQuickBrownFoxJumpsOverTheLazyDogThisIsAVeryLongPropertyName:
+        $ref: "#/$defs/ThisIsAnExtremelyLongTypeNameThatShouldStillWorkCorrectlyInTheCodeGenerator"
+      items:
+        type: array
+        items:
+          type: object
+          properties:
+            aVeryLongInlinePropertyNameThatWillCreateALongGeneratedTypeName:
+              type: string
+            anotherLongPropertyNameForTestingPurposesOnlyDoNotUseInProduction:
+              type: number

@@ -1,0 +1,42 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: Person
+type: object
+required:
+  - id
+  - name
+  - status
+properties:
+  id:
+    type: string
+    format: uuid
+  name:
+    type: string
+  age:
+    type: integer
+  status:
+    $ref: "#/$defs/Status"
+  address:
+    $ref: "#/$defs/Address"
+
+$defs:
+  Status:
+    title: Status
+    type: string
+    enum:
+      - active
+      - inactive
+      - pending
+
+  Address:
+    title: Address
+    type: object
+    required:
+      - street
+      - city
+    properties:
+      street:
+        type: string
+      city:
+        type: string
+      country:
+        type: string

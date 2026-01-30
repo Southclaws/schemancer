@@ -1,0 +1,184 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+
+RPCRequestToPlugin:
+  oneOf:
+    - $ref: "#/$defs/RPCRequestEvent"
+    - $ref: "#/$defs/RPCRequestPing"
+
+RPCResponseFromPlugin:
+  oneOf:
+    - $ref: "#/$defs/RPCResponseEvent"
+    - $ref: "#/$defs/RPCResponsePing"
+
+RPCRequestToHost:
+  oneOf:
+    - $ref: "#/$defs/RPCRequestGetConfig"
+    - $ref: "#/$defs/RPCRequestPublishEvent"
+
+RPCResponseFromHost:
+  oneOf:
+    - $ref: "#/$defs/RPCResponseGetConfig"
+    - $ref: "#/$defs/RPCResponsePublishEvent"
+
+RPCRequestBase:
+  type: object
+  required: ["jsonrpc", "method", "id"]
+  properties:
+    jsonrpc:
+      type: string
+      enum: ["2.0"]
+    method:
+      type: string
+    params:
+      type: object
+    id:
+      type: integer
+
+RPCResponseBase:
+  type: object
+  required: ["jsonrpc", "id"]
+  properties:
+    jsonrpc:
+      type: string
+      enum: ["2.0"]
+    result:
+      type: object
+    error:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+    id:
+      type: integer
+
+$defs:
+  RPCRequestEvent:
+    allOf:
+      - $ref: "#/RPCRequestBase"
+      - type: object
+        required: ["method", "params"]
+        properties:
+          method:
+            type: string
+            const: "event"
+          params:
+            type: object
+            description: "Event payload - structure depends on event type"
+
+  RPCResponseEvent:
+    allOf:
+      - $ref: "#/RPCResponseBase"
+      - type: object
+        properties:
+          result:
+            type: object
+            properties:
+              ok:
+                type: boolean
+
+  RPCResponseShutdown:
+    allOf:
+      - $ref: "#/RPCResponseBase"
+      - type: object
+        properties:
+          result:
+            type: object
+            properties:
+              ok:
+                type: boolean
+
+  RPCRequestPing:
+    allOf:
+      - $ref: "#/RPCRequestBase"
+      - type: object
+        required: ["method"]
+        properties:
+          method:
+            type: string
+            const: "ping"
+          params:
+            type: object
+            properties: {}
+
+  RPCResponsePing:
+    allOf:
+      - $ref: "#/RPCResponseBase"
+      - type: object
+        properties:
+          result:
+            type: object
+            required: ["pong"]
+            properties:
+              pong:
+                type: boolean
+              uptime_seconds:
+                type: number
+                description: "How long the plugin has been running"
+              status:
+                type: string
+                description: "Optional status message"
+
+  RPCRequestGetConfig:
+    allOf:
+      - $ref: "#/RPCRequestBase"
+      - type: object
+        required: ["method"]
+        properties:
+          method:
+            type: string
+            const: "get_config"
+          params:
+            type: object
+            properties:
+              keys:
+                type: array
+                items:
+                  type: string
+                description: "Specific config keys to retrieve. If empty, returns all config."
+
+  RPCResponseGetConfig:
+    allOf:
+      - $ref: "#/RPCResponseBase"
+      - type: object
+        properties:
+          result:
+            type: object
+            properties:
+              config:
+                type: object
+                description: "Configuration key-value pairs"
+                additionalProperties: true
+
+  RPCRequestPublishEvent:
+    allOf:
+      - $ref: "#/RPCRequestBase"
+      - type: object
+        required: ["method", "params"]
+        properties:
+          method:
+            type: string
+            const: "publish_event"
+          params:
+            type: object
+            required: ["event_type", "payload"]
+            properties:
+              event_type:
+                type: string
+                description: "Event type to publish (must be in snake_case)"
+              payload:
+                type: object
+                description: "Event data"
+                additionalProperties: true
+
+  RPCResponsePublishEvent:
+    allOf:
+      - $ref: "#/RPCResponseBase"
+      - type: object
+        properties:
+          result:
+            type: object
+            properties:
+              ok:
+                type: boolean

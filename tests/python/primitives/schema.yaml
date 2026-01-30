@@ -1,0 +1,65 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: PrimitiveTests
+$defs:
+  AllPrimitives:
+    type: object
+    properties:
+      stringField:
+        type: string
+      intField:
+        type: integer
+      numberField:
+        type: number
+      boolField:
+        type: boolean
+    required:
+      - stringField
+      - intField
+      - numberField
+      - boolField
+
+  OptionalPrimitives:
+    type: object
+    properties:
+      maybeString:
+        type: string
+      maybeInt:
+        type: integer
+      maybeNumber:
+        type: number
+      maybeBool:
+        type: boolean
+
+  MixedRequired:
+    type: object
+    properties:
+      requiredString:
+        type: string
+      optionalString:
+        type: string
+      requiredInt:
+        type: integer
+      optionalInt:
+        type: integer
+    required:
+      - requiredString
+      - requiredInt
+
+  TypeAliases:
+    type: object
+    properties:
+      userId:
+        $ref: "#/$defs/UserId"
+      timestamp:
+        $ref: "#/$defs/Timestamp"
+      amount:
+        $ref: "#/$defs/Amount"
+
+  UserId:
+    type: string
+
+  Timestamp:
+    type: integer
+
+  Amount:
+    type: number

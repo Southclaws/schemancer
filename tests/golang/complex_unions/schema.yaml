@@ -1,0 +1,86 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: ComplexUnions
+description: Test complex anyOf/oneOf scenarios
+$defs:
+  StringOrNumber:
+    anyOf:
+      - type: string
+      - type: number
+
+  StringOrNull:
+    anyOf:
+      - type: string
+      - type: "null"
+
+  MultiType:
+    oneOf:
+      - type: string
+      - type: integer
+      - type: boolean
+      - type: array
+        items:
+          type: string
+
+  ObjectUnion:
+    oneOf:
+      - type: object
+        properties:
+          kind:
+            const: "a"
+          aField:
+            type: string
+        required:
+          - kind
+          - aField
+      - type: object
+        properties:
+          kind:
+            const: "b"
+          bField:
+            type: integer
+        required:
+          - kind
+          - bField
+      - type: object
+        properties:
+          kind:
+            const: "c"
+          cField:
+            type: boolean
+        required:
+          - kind
+          - cField
+
+  NestedUnion:
+    type: object
+    properties:
+      data:
+        anyOf:
+          - type: string
+          - type: object
+            properties:
+              nested:
+                anyOf:
+                  - type: integer
+                  - type: array
+                    items:
+                      type: string
+
+  AllOfComposition:
+    allOf:
+      - type: object
+        properties:
+          id:
+            type: string
+        required:
+          - id
+      - type: object
+        properties:
+          name:
+            type: string
+        required:
+          - name
+      - type: object
+        properties:
+          timestamp:
+            type: string

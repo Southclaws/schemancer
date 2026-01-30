@@ -1,0 +1,47 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: RefTests
+$defs:
+  Address:
+    type: object
+    properties:
+      street:
+        type: string
+      city:
+        type: string
+      country:
+        type: string
+    required:
+      - street
+      - city
+
+  Person:
+    type: object
+    properties:
+      name:
+        type: string
+      homeAddress:
+        $ref: "#/$defs/Address"
+      workAddress:
+        $ref: "#/$defs/Address"
+      friends:
+        type: array
+        items:
+          $ref: "#/$defs/Person"
+    required:
+      - name
+
+  Company:
+    type: object
+    properties:
+      name:
+        type: string
+      headquarters:
+        $ref: "#/$defs/Address"
+      employees:
+        type: array
+        items:
+          $ref: "#/$defs/Person"
+      ceo:
+        $ref: "#/$defs/Person"
+    required:
+      - name

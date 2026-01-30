@@ -1,0 +1,19 @@
+golang:
+  package: "mymodels"
+  optional_style: "opt"
+  format_mappings:
+    uuid:
+      type: "CustomUUID"
+      import: "example.com/uuid"
+    date-time:
+      type: "time.Time"
+      import: "time"
+
+typescript:
+  null_optional: true
+  branded_primitives: true
+  format_mappings:
+    date-time:
+      type: "Date"
+    uuid:
+      type: "UUID"

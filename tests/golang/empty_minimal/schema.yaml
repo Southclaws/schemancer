@@ -1,0 +1,50 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: EmptyMinimal
+description: Test empty and minimal schemas
+$defs:
+  EmptyObject:
+    type: object
+
+  EmptyObjectWithTitle:
+    type: object
+    title: EmptyTitled
+
+  ObjectNoType:
+    properties:
+      field:
+        type: string
+
+  JustAString:
+    type: string
+
+  JustAnInteger:
+    type: integer
+
+  JustANumber:
+    type: number
+
+  JustABoolean:
+    type: boolean
+
+  JustAnArray:
+    type: array
+
+  ArrayNoItems:
+    type: array
+    items: {}
+
+  EmptyEnum:
+    type: string
+    enum: []
+
+  SingleEnum:
+    type: string
+    enum:
+      - only_value
+
+  TrueSchema:
+    {}
+
+  ObjectWithEmptyProps:
+    type: object
+    properties: {}

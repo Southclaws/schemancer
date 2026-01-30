@@ -1,0 +1,27 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: EventSchema
+$defs:
+  EventPayload:
+    type: object
+    properties:
+      eventId:
+        type: string
+        format: uuid
+      eventType:
+        type: string
+      data:
+        type: object
+    required:
+      - eventId
+      - eventType
+
+  EventMetadata:
+    type: object
+    properties:
+      timestamp:
+        type: string
+        format: date-time
+      source:
+        type: string
+    required:
+      - timestamp

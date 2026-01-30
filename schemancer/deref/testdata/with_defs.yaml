@@ -1,0 +1,13 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: Person
+type: object
+required:
+  - name
+properties:
+  name:
+    $ref: "#/$defs/Name"
+
+$defs:
+  Name:
+    type: string
+    description: A person's name

@@ -1,0 +1,91 @@
+# Example schemancer configuration file
+# Copy this to schemancer.yaml and customize as needed
+#
+# Usage:
+#   schemancer schema.yaml                    # Generate all languages with output paths
+#   schemancer schema.yaml golang output.go   # Generate specific language
+
+golang:
+  # Output directory for generated code (enables multi-language generation)
+  output: "./generated"
+
+  # Package name for generated Go code
+  package: "models"
+
+  # How to represent optional fields: "pointer" or "opt"
+  optional_style: "pointer"
+
+  # Custom type mappings for JSON Schema formats
+  format_mappings:
+    uuid:
+      type: "uuid.UUID"
+      import: "github.com/google/uuid"
+    date-time:
+      type: "time.Time"
+      import: "time"
+    date:
+      type: "time.Time"
+      import: "time"
+    email:
+      type: "mail.Address"
+      import: "net/mail"
+    uri:
+      type: "url.URL"
+      import: "net/url"
+
+typescript:
+  # Output directory for generated code (enables multi-language generation)
+  output: "./generated"
+
+  # Use null instead of undefined for optional fields
+  null_optional: false
+
+  # Use branded types for primitive type aliases (nominal typing)
+  branded_primitives: false
+
+  # Custom type mappings for JSON Schema formats
+  format_mappings:
+    date-time:
+      type: "Date"
+    uuid:
+      type: "string"
+
+java:
+  # Output directory for generated code (enables multi-language generation)
+  output: "./generated"
+
+  # Package name for generated Java code
+  package: "com.example.models"
+
+  # Custom type mappings for JSON Schema formats
+  format_mappings:
+    uuid:
+      type: "java.util.UUID"
+    date-time:
+      type: "java.time.OffsetDateTime"
+    date:
+      type: "java.time.LocalDate"
+    uri:
+      type: "java.net.URI"
+
+python:
+  # Output directory for generated code (enables multi-language generation)
+  output: "./generated"
+
+  # Custom type mappings for JSON Schema formats
+  format_mappings:
+    uuid:
+      type: "UUID"
+      import: "uuid"
+    date-time:
+      type: "datetime"
+      import: "datetime"
+    date:
+      type: "date"
+      import: "datetime"
+    email:
+      type: "EmailStr"
+      import: "pydantic"
+    uri:
+      type: "AnyUrl"
+      import: "pydantic"

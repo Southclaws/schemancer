@@ -1,0 +1,3 @@
+golang:
+  package: "generated"
+  optional_style: "pointer"

@@ -1,0 +1,68 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: DeepNesting
+description: Test deeply nested structures
+$defs:
+  Level1:
+    type: object
+    properties:
+      name:
+        type: string
+      level2:
+        type: object
+        properties:
+          name:
+            type: string
+          level3:
+            type: object
+            properties:
+              name:
+                type: string
+              level4:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  level5:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            key:
+                              type: string
+                            value:
+                              type: integer
+                    required:
+                      - name
+                required:
+                  - name
+            required:
+              - name
+        required:
+          - name
+    required:
+      - name
+
+  DeepArray:
+    type: array
+    items:
+      type: array
+      items:
+        type: array
+        items:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+          required:
+            - x
+            - y
+            - z

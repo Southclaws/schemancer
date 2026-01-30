@@ -1,0 +1,42 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: ArrayTests
+$defs:
+  StringList:
+    type: array
+    items:
+      type: string
+
+  IntegerList:
+    type: array
+    items:
+      type: integer
+
+  Person:
+    type: object
+    required:
+      - name
+      - tags
+    properties:
+      name:
+        type: string
+      tags:
+        type: array
+        items:
+          type: string
+      scores:
+        type: array
+        items:
+          type: number
+
+  Team:
+    type: object
+    required:
+      - name
+      - members
+    properties:
+      name:
+        type: string
+      members:
+        type: array
+        items:
+          $ref: "#/$defs/Person"

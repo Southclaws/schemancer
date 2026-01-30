@@ -1,0 +1,16 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: Models
+$defs:
+  Author:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+      name:
+        type: string
+      contactInfo:
+        $ref: "./contact.yaml#/$defs/ContactInfo"
+    required:
+      - id
+      - name

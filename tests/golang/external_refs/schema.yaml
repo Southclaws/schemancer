@@ -1,0 +1,17 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: EventHandler
+type: object
+properties:
+  handlerId:
+    type: string
+  payload:
+    $ref: "events.yaml#/$defs/EventPayload"
+  metadata:
+    $ref: "./events.yaml#/$defs/EventMetadata"
+  relatedPayloads:
+    type: array
+    items:
+      $ref: "./events.yaml#/$defs/EventPayload"
+required:
+  - handlerId
+  - payload

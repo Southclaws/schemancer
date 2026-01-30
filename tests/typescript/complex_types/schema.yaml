@@ -1,0 +1,95 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: ApiResponse
+description: A generic API response wrapper with pagination support.
+type: object
+required:
+  - data
+  - meta
+properties:
+  data:
+    type: array
+    description: The array of result items.
+    items:
+      $ref: "#/$defs/Item"
+  meta:
+    $ref: "#/$defs/Metadata"
+  errors:
+    type: array
+    description: Any errors that occurred during the request.
+    items:
+      $ref: "#/$defs/Error"
+
+$defs:
+  Item:
+    type: object
+    description: |
+      Represents an item in the system.
+      Items can be of various types and contain metadata.
+    required:
+      - id
+      - type
+      - createdAt
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: Unique identifier for the item.
+      type:
+        type: string
+        description: The type classification of this item.
+      createdAt:
+        type: string
+        format: date-time
+        description: When this item was created.
+      updatedAt:
+        type: string
+        format: date-time
+        description: When this item was last updated.
+      tags:
+        type: array
+        description: Tags associated with this item.
+        items:
+          type: string
+      metadata:
+        type: object
+        description: Additional key-value metadata.
+        additionalProperties:
+          type: string
+
+  Metadata:
+    type: object
+    description: Pagination and request metadata.
+    required:
+      - total
+      - page
+      - perPage
+    properties:
+      total:
+        type: integer
+        description: Total number of items available.
+      page:
+        type: integer
+        description: Current page number (1-indexed).
+      perPage:
+        type: integer
+        description: Number of items per page.
+      hasMore:
+        type: boolean
+        description: Whether there are more pages available.
+
+  Error:
+    type: object
+    description: Describes an error that occurred.
+    required:
+      - code
+      - message
+    properties:
+      code:
+        type: string
+        description: Machine-readable error code.
+      message:
+        type: string
+        description: Human-readable error message.
+      field:
+        type: string
+        description: The field that caused the error, if applicable.

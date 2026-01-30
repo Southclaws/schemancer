@@ -1,0 +1,60 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: Event
+oneOf:
+  - $ref: "#/$defs/CreatedEvent"
+  - $ref: "#/$defs/UpdatedEvent"
+  - $ref: "#/$defs/DeletedEvent"
+
+$defs:
+  BaseEvent:
+    type: object
+    required: [type, timestamp]
+    properties:
+      type:
+        type: string
+      timestamp:
+        type: string
+        format: date-time
+    additionalProperties: false
+
+  CreatedEvent:
+    allOf:
+      - $ref: "#/$defs/BaseEvent"
+      - type: object
+        required: [id, name]
+        properties:
+          type:
+            const: created
+          id:
+            type: string
+          name:
+            type: string
+        additionalProperties: false
+
+  UpdatedEvent:
+    allOf:
+      - $ref: "#/$defs/BaseEvent"
+      - type: object
+        required: [id, changes]
+        properties:
+          type:
+            const: updated
+          id:
+            type: string
+          changes:
+            type: object
+        additionalProperties: false
+
+  DeletedEvent:
+    allOf:
+      - $ref: "#/$defs/BaseEvent"
+      - type: object
+        required: [id]
+        properties:
+          type:
+            const: deleted
+          id:
+            type: string
+          reason:
+            type: string
+        additionalProperties: false

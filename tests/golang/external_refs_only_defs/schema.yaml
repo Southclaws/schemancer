@@ -1,0 +1,43 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$defs:
+  RPCRequestToPlugin:
+    oneOf:
+      - $ref: "#/$defs/RPCRequestEvent"
+      - $ref: "#/$defs/RPCRequestOther"
+
+  RPCRequestBase:
+    type: object
+    required: ["id", "jsonrpc"]
+    properties:
+      id:
+        type: integer
+      jsonrpc:
+        type: string
+        const: "2.0"
+
+  RPCRequestEvent:
+    allOf:
+      - $ref: "#/$defs/RPCRequestBase"
+      - type: object
+        required: ["method", "params"]
+        properties:
+          method:
+            type: string
+            const: "event"
+          params:
+            $ref: "events.yaml#/$defs/EventPayload"
+
+  RPCRequestOther:
+    allOf:
+      - $ref: "#/$defs/RPCRequestBase"
+      - type: object
+        required: ["method", "params"]
+        properties:
+          method:
+            type: string
+            const: "other"
+          params:
+            type: object
+            properties:
+              info:
+                type: string
