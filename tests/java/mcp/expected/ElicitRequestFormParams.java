@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /** The parameters for a request to elicit non-sensitive information from the user via a form in the client. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ElicitRequestFormParams {
@@ -32,4 +31,10 @@ public class ElicitRequestFormParams {
  */
     @JsonProperty(value = "task")
     public TaskMetadata task;
+
+    public ElicitRequestFormParams() {
+        this.meta = new ElicitRequestFormParamsMeta();
+        this.requestedSchema = new ElicitRequestFormParamsRequestedSchema();
+        this.task = new TaskMetadata();
+    }
 }

@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /**
  * Sent from the server to request a list of root URIs from the client. Roots allow
  * servers to ask for specific directories or files to operate on. A common example
@@ -23,4 +22,8 @@ public class ListRootsRequest {
     public String method;
     @JsonProperty(value = "params")
     public RequestParams params;
+
+    public ListRootsRequest() {
+        this.params = new RequestParams();
+    }
 }

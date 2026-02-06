@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /** A request to retrieve a list of tasks. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ListTasksRequest {
@@ -15,4 +14,8 @@ public class ListTasksRequest {
     public String method;
     @JsonProperty(value = "params")
     public PaginatedRequestParams params;
+
+    public ListTasksRequest() {
+        this.params = new PaginatedRequestParams();
+    }
 }

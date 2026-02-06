@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /** Used by the client to invoke a tool provided by the server. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CallToolRequest {
@@ -15,4 +14,8 @@ public class CallToolRequest {
     public String method;
     @JsonProperty(value = "params", required = true)
     public CallToolRequestParams params;
+
+    public CallToolRequest() {
+        this.params = new CallToolRequestParams();
+    }
 }

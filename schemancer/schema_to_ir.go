@@ -357,13 +357,35 @@ func convertStructToIRType(root *jsonschema.Schema, name string, schema *jsonsch
 		if propSchema != nil {
 			fieldDesc = propSchema.Description
 		}
-		fields = append(fields, ir.IRField{
+		field := ir.IRField{
 			Name:        fieldName,
 			Description: fieldDesc,
 			JSONName:    propName,
 			Type:        schemaToIRTypeRefWithContext(root, propSchema, goName+fieldName, inlineTypes),
 			Required:    requiredSet[propName],
-		})
+		}
+
+		// Parse default value
+		if propSchema != nil && propSchema.Default != nil {
+			field.Default = parseDefault(propSchema.Default, &field.Type)
+		}
+
+		// Parse language-specific extensions (x-java-name, x-go-name, etc.)
+		if propSchema != nil && propSchema.Extra != nil {
+			extensions := make(map[string]string)
+			for key, val := range propSchema.Extra {
+				if strings.HasPrefix(key, "x-") {
+					if strVal, ok := val.(string); ok {
+						extensions[key] = strVal
+					}
+				}
+			}
+			if len(extensions) > 0 {
+				field.Extensions = extensions
+			}
+		}
+
+		fields = append(fields, field)
 	}
 
 	return &ir.IRType{
@@ -481,6 +503,30 @@ func schemaToIRTypeRefWithContext(root *jsonschema.Schema, schema *jsonschema.Sc
 	}
 
 	return ir.IRTypeRef{Builtin: ir.IRBuiltinAny, Constraints: constraints}
+}
+
+// parseDefault converts a JSON Schema default value (json.RawMessage) into an IRDefault.
+// Returns nil if the raw value is empty or null.
+func parseDefault(raw json.RawMessage, typeRef *ir.IRTypeRef) *ir.IRDefault {
+	if raw == nil {
+		return nil
+	}
+
+	rawStr := strings.TrimSpace(string(raw))
+	if rawStr == "" || rawStr == "null" {
+		return nil
+	}
+
+	builtin := typeRef.Builtin
+	if builtin == ir.IRBuiltinNone && typeRef.Name != "" {
+		// Named type reference (e.g., enum default) — treat as string
+		builtin = ir.IRBuiltinString
+	}
+
+	return &ir.IRDefault{
+		RawValue: rawStr,
+		Builtin:  builtin,
+	}
 }
 
 func getConstValue(v interface{}) string {

@@ -2,8 +2,8 @@ package com.example.mcp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
 import java.util.List;
-
 
 /** Base interface to add `icons` property. */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -20,5 +20,5 @@ public class Icons {
  * - `image/webp` - WebP images (modern, efficient format)
  */
     @JsonProperty(value = "icons")
-    public List<Icon> icons;
+    public List<Icon> icons = new ArrayList<>();
 }

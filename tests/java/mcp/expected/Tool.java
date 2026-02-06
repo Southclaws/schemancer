@@ -2,16 +2,17 @@ package com.example.mcp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 /** Definition for a tool the client can call. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Tool {
     /** See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage. */
     @JsonProperty(value = "_meta")
-    public Map<String, Object> meta;
+    public Map<String, Object> meta = new HashMap<>();
     /**
  * Optional additional tool information.
  * 
@@ -41,7 +42,7 @@ public class Tool {
  * - `image/webp` - WebP images (modern, efficient format)
  */
     @JsonProperty(value = "icons")
-    public List<Icon> icons;
+    public List<Icon> icons = new ArrayList<>();
     /** A JSON Schema object defining the expected parameters for the tool. */
     @JsonProperty(value = "inputSchema", required = true)
     public ToolInputSchema inputSchema;
@@ -67,4 +68,11 @@ public class Tool {
  */
     @JsonProperty(value = "title")
     public String title;
+
+    public Tool() {
+        this.annotations = new ToolAnnotations();
+        this.execution = new ToolExecution();
+        this.inputSchema = new ToolInputSchema();
+        this.outputSchema = new ToolOutputSchema();
+    }
 }

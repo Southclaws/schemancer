@@ -3,8 +3,8 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
-
 
 /** An optionally-sized icon that can be displayed in a user interface. */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -22,7 +22,7 @@ public class Icon {
  * If not provided, the client should assume that the icon can be used at any size.
  */
     @JsonProperty(value = "sizes")
-    public List<String> sizes;
+    public List<String> sizes = new ArrayList<>();
     /**
  * A standard URI pointing to an icon resource. May be an HTTP/HTTPS URL or a
  * `data:` URI with Base64-encoded image data.

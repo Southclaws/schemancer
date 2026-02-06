@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /**
  * Metadata for augmenting a request with task execution.
  * Include this in the `task` field of the request parameters.

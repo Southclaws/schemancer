@@ -2,6 +2,7 @@ package java
 
 import (
 	"bytes"
+	"fmt"
 	"sort"
 	"strings"
 	"text/template"
@@ -24,6 +25,7 @@ var DefaultFormatMappings = map[ir.IRFormat]generators.FormatTypeMapping{
 // config holds Java-specific generator configuration
 type config struct {
 	packageName string
+	accessors   bool
 }
 
 // Option is a Java-specific generator option
@@ -38,6 +40,13 @@ func (Option) OptionValue() string { return "java" }
 func WithPackageName(name string) Option {
 	return Option{apply: func(c *config) {
 		c.packageName = name
+	}}
+}
+
+// WithAccessors enables getter/setter generation (fields become private)
+func WithAccessors(enabled bool) Option {
+	return Option{apply: func(c *config) {
+		c.accessors = enabled
 	}}
 }
 
@@ -66,18 +75,32 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 
 	formatMappings := g.getFormatMappings(opts)
 
+	// Build type-kind lookup for constructor generation
+	typeKinds := make(map[string]ir.IRTypeKind)
+	for _, t := range data.Types {
+		typeKinds[t.Name] = t.Kind
+	}
+
 	funcs := template.FuncMap{
-		"pascal":    casing.ToPascalCase,
-		"camel":     casing.ToCamelCase,
-		"snake":     casing.ToSnakeCase,
-		"kebab":     casing.ToKebabCase,
-		"lower":     strings.ToLower,
-		"upper":     strings.ToUpper,
-		"javaType":  makeJavaTypeFunc(formatMappings),
-		"comment":   formatComment,
-		"hasPrefix": strings.HasPrefix,
-		"isIntEnum": isIntEnum,
-		"toEnumKey": toEnumKey,
+		"pascal":           casing.ToPascalCase,
+		"camel":            casing.ToCamelCase,
+		"snake":            casing.ToSnakeCase,
+		"kebab":            casing.ToKebabCase,
+		"lower":            strings.ToLower,
+		"upper":            strings.ToUpper,
+		"javaType":         makeJavaTypeFunc(formatMappings),
+		"javaInit":         makeJavaInitFunc(),
+		"javaDefault":      makeJavaDefaultFunc(),
+		"javaFieldName":    makeJavaFieldNameFunc(),
+		"javaConstructor":  makeJavaConstructorFunc(typeKinds),
+		"javaGetter":       makeJavaGetterFunc(formatMappings),
+		"javaSetter":       makeJavaSetterFunc(formatMappings),
+		"comment":          formatComment,
+		"hasPrefix":        strings.HasPrefix,
+		"isIntEnum":        isIntEnum,
+		"toEnumKey":        toEnumKey,
+		"hasDefault":       hasDefault,
+		"hasFieldDefaults": hasFieldDefaults,
 	}
 
 	tmpl, err := template.New("java").Funcs(funcs).Parse(javaPerTypeTemplate)
@@ -88,7 +111,7 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 	var files []generators.GeneratedFile
 
 	for _, t := range data.Types {
-		tplData := preparePerTypeData(cfg.packageName, t, formatMappings)
+		tplData := preparePerTypeData(cfg.packageName, t, formatMappings, cfg.accessors)
 
 		var buf bytes.Buffer
 		if err := tmpl.Execute(&buf, tplData); err != nil {
@@ -136,6 +159,21 @@ func toEnumKey(v ir.IREnumValue) string {
 	return strings.ToUpper(strings.ReplaceAll(strings.ReplaceAll(v.StringValue, "-", "_"), " ", "_"))
 }
 
+// hasDefault returns true if the field has a default value
+func hasDefault(f ir.IRField) bool {
+	return f.Default != nil
+}
+
+// hasFieldDefaults returns true if any field in the type has a default value
+func hasFieldDefaults(t ir.IRType) bool {
+	for _, f := range t.Fields {
+		if f.Default != nil {
+			return true
+		}
+	}
+	return false
+}
+
 type templateData struct {
 	Package  string
 	Imports  []string
@@ -145,29 +183,43 @@ type templateData struct {
 
 // perTypeData holds data for generating a single Java type/file
 type perTypeData struct {
-	Package  string
-	Imports  []string
-	Type     ir.IRType
-	HasUnion bool
+	Package   string
+	Imports   []string
+	Type      ir.IRType
+	HasUnion  bool
+	Accessors bool
 }
 
-func preparePerTypeData(packageName string, t ir.IRType, formatMappings map[ir.IRFormat]generators.FormatTypeMapping) perTypeData {
+func preparePerTypeData(packageName string, t ir.IRType, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, accessors bool) perTypeData {
 	importSet := make(map[string]bool)
 	hasUnion := false
 
-	// Always need Jackson annotations
-	importSet["com.fasterxml.jackson.annotation.JsonIgnoreProperties"] = true
-	importSet["com.fasterxml.jackson.annotation.JsonProperty"] = true
-
-	if t.Kind == ir.IRKindDiscriminatedUnion {
+	if t.Kind == ir.IRKindEnum {
+		// Enums only need JsonValue for serialization/deserialization
+		importSet["com.fasterxml.jackson.annotation.JsonValue"] = true
+	} else if t.Kind == ir.IRKindDiscriminatedUnion {
 		hasUnion = true
+		importSet["com.fasterxml.jackson.annotation.JsonIgnoreProperties"] = true
+		importSet["com.fasterxml.jackson.annotation.JsonProperty"] = true
 		importSet["com.fasterxml.jackson.annotation.JsonCreator"] = true
 		importSet["com.fasterxml.jackson.annotation.JsonSubTypes"] = true
 		importSet["com.fasterxml.jackson.annotation.JsonTypeInfo"] = true
 		importSet["com.fasterxml.jackson.annotation.JsonTypeName"] = true
 		collectImportsFromUnion(t, formatMappings, importSet)
 	} else {
+		// Structs need JsonIgnoreProperties and JsonProperty
+		importSet["com.fasterxml.jackson.annotation.JsonIgnoreProperties"] = true
+		importSet["com.fasterxml.jackson.annotation.JsonProperty"] = true
 		collectImportsFromType(t, formatMappings, importSet)
+
+		// Check if any field has a default value — if so, add JsonSetter and Nulls imports
+		for _, field := range t.Fields {
+			if field.Default != nil {
+				importSet["com.fasterxml.jackson.annotation.JsonSetter"] = true
+				importSet["com.fasterxml.jackson.annotation.Nulls"] = true
+				break
+			}
+		}
 	}
 
 	var imports []string
@@ -177,10 +229,11 @@ func preparePerTypeData(packageName string, t ir.IRType, formatMappings map[ir.I
 	sort.Strings(imports)
 
 	return perTypeData{
-		Package:  packageName,
-		Imports:  imports,
-		Type:     t,
-		HasUnion: hasUnion,
+		Package:   packageName,
+		Imports:   imports,
+		Type:      t,
+		HasUnion:  hasUnion,
+		Accessors: accessors,
 	}
 }
 
@@ -188,20 +241,30 @@ func prepareTemplateData(packageName string, data *ir.IR, formatMappings map[ir.
 	importSet := make(map[string]bool)
 	hasUnion := false
 
-	// Always need Jackson annotations
-	importSet["com.fasterxml.jackson.annotation.JsonIgnoreProperties"] = true
-	importSet["com.fasterxml.jackson.annotation.JsonProperty"] = true
-
 	for _, t := range data.Types {
-		if t.Kind == ir.IRKindDiscriminatedUnion {
+		if t.Kind == ir.IRKindEnum {
+			importSet["com.fasterxml.jackson.annotation.JsonValue"] = true
+		} else if t.Kind == ir.IRKindDiscriminatedUnion {
 			hasUnion = true
+			importSet["com.fasterxml.jackson.annotation.JsonIgnoreProperties"] = true
+			importSet["com.fasterxml.jackson.annotation.JsonProperty"] = true
 			importSet["com.fasterxml.jackson.annotation.JsonCreator"] = true
 			importSet["com.fasterxml.jackson.annotation.JsonSubTypes"] = true
 			importSet["com.fasterxml.jackson.annotation.JsonTypeInfo"] = true
 			importSet["com.fasterxml.jackson.annotation.JsonTypeName"] = true
 			collectImportsFromUnion(t, formatMappings, importSet)
 		} else {
+			importSet["com.fasterxml.jackson.annotation.JsonIgnoreProperties"] = true
+			importSet["com.fasterxml.jackson.annotation.JsonProperty"] = true
 			collectImportsFromType(t, formatMappings, importSet)
+
+			for _, field := range t.Fields {
+				if field.Default != nil {
+					importSet["com.fasterxml.jackson.annotation.JsonSetter"] = true
+					importSet["com.fasterxml.jackson.annotation.Nulls"] = true
+					break
+				}
+			}
 		}
 	}
 
@@ -224,7 +287,8 @@ func collectImportsFromType(t ir.IRType, formatMappings map[ir.IRFormat]generato
 		collectImportsFromRef(&field.Type, formatMappings, importSet)
 	}
 	if t.Element != nil {
-		collectImportsFromRef(t.Element, formatMappings, importSet)
+		// Alias types don't initialize fields, so skip ArrayList/HashMap imports
+		collectImportsFromRefForAlias(t.Element, formatMappings, importSet)
 	}
 }
 
@@ -237,6 +301,15 @@ func collectImportsFromUnion(t ir.IRType, formatMappings map[ir.IRFormat]generat
 }
 
 func collectImportsFromRef(ref *ir.IRTypeRef, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, importSet map[string]bool) {
+	collectImportsFromRefInner(ref, formatMappings, importSet, true)
+}
+
+// collectImportsFromRefForAlias collects imports without ArrayList/HashMap (aliases don't initialize fields)
+func collectImportsFromRefForAlias(ref *ir.IRTypeRef, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, importSet map[string]bool) {
+	collectImportsFromRefInner(ref, formatMappings, importSet, false)
+}
+
+func collectImportsFromRefInner(ref *ir.IRTypeRef, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, importSet map[string]bool, includeInitImports bool) {
 	if ref == nil {
 		return
 	}
@@ -249,13 +322,19 @@ func collectImportsFromRef(ref *ir.IRTypeRef, formatMappings map[ir.IRFormat]gen
 	// Check for List import
 	if ref.Array != nil {
 		importSet["java.util.List"] = true
-		collectImportsFromRef(ref.Array, formatMappings, importSet)
+		if includeInitImports {
+			importSet["java.util.ArrayList"] = true
+		}
+		collectImportsFromRefInner(ref.Array, formatMappings, importSet, includeInitImports)
 	}
 
 	// Check for Map import
 	if ref.Map != nil {
 		importSet["java.util.Map"] = true
-		collectImportsFromRef(ref.Map, formatMappings, importSet)
+		if includeInitImports {
+			importSet["java.util.HashMap"] = true
+		}
+		collectImportsFromRefInner(ref.Map, formatMappings, importSet, includeInitImports)
 	}
 }
 
@@ -353,6 +432,117 @@ func makeJavaTypeFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMappin
 	return javaType
 }
 
+func makeJavaInitFunc() func(*ir.IRTypeRef) string {
+	return func(ref *ir.IRTypeRef) string {
+		if ref.Array != nil {
+			return " = new ArrayList<>()"
+		}
+		if ref.Map != nil {
+			return " = new HashMap<>()"
+		}
+		return ""
+	}
+}
+
+// makeJavaDefaultFunc returns a template function that renders a field's default value as a Java literal.
+// When a field has a default, this takes priority over javaInit (collection initialization).
+func makeJavaDefaultFunc() func(ir.IRField) string {
+	return func(field ir.IRField) string {
+		if field.Default == nil {
+			return ""
+		}
+
+		raw := field.Default.RawValue
+
+		switch field.Default.Builtin {
+		case ir.IRBuiltinInt:
+			return " = " + raw
+		case ir.IRBuiltinFloat:
+			return " = " + raw
+		case ir.IRBuiltinBool:
+			return " = " + raw
+		case ir.IRBuiltinString:
+			// raw is already JSON-quoted (e.g., "\"hello\"")
+			return " = " + raw
+		default:
+			return ""
+		}
+	}
+}
+
+// makeJavaFieldNameFunc returns a template function that resolves the Java field name.
+// Uses x-java-name extension if present, otherwise falls back to camelCase.
+func makeJavaFieldNameFunc() func(ir.IRField) string {
+	return func(field ir.IRField) string {
+		if name, ok := field.Extensions["x-java-name"]; ok {
+			return name
+		}
+		return casing.ToCamelCase(field.Name)
+	}
+}
+
+// makeJavaConstructorFunc returns a template function that generates a no-arg constructor
+// initializing all struct-typed fields with new instances.
+func makeJavaConstructorFunc(typeKinds map[string]ir.IRTypeKind) func(ir.IRType) string {
+	return func(t ir.IRType) string {
+		var refs []ir.IRField
+		for _, f := range t.Fields {
+			if f.Type.Name != "" && f.Type.Array == nil && f.Type.Map == nil && f.Type.Builtin == ir.IRBuiltinNone {
+				if kind, ok := typeKinds[f.Type.Name]; ok && kind == ir.IRKindStruct {
+					refs = append(refs, f)
+				}
+			}
+		}
+		if len(refs) == 0 {
+			return ""
+		}
+
+		var sb strings.Builder
+		sb.WriteString("\n\n    public " + t.Name + "() {\n")
+		for _, f := range refs {
+			fieldName := f.Extensions["x-java-name"]
+			if fieldName == "" {
+				fieldName = casing.ToCamelCase(f.Name)
+			}
+			sb.WriteString("        this." + fieldName + " = new " + f.Type.Name + "();\n")
+		}
+		sb.WriteString("    }")
+		return sb.String()
+	}
+}
+
+// makeJavaGetterFunc returns a template function that generates a getter method for a field.
+func makeJavaGetterFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapping) func(ir.IRField) string {
+	javaType := makeJavaTypeFunc(formatMappings)
+	return func(field ir.IRField) string {
+		fieldName := field.Extensions["x-java-name"]
+		if fieldName == "" {
+			fieldName = casing.ToCamelCase(field.Name)
+		}
+		typeName := javaType(&field.Type, field.Required)
+		pascalName := casing.ToPascalCase(field.Name)
+		prefix := "get"
+		if typeName == "boolean" || typeName == "Boolean" {
+			prefix = "is"
+		}
+		return fmt.Sprintf("    public %s %s%s() {\n        return %s;\n    }", typeName, prefix, pascalName, fieldName)
+	}
+}
+
+// makeJavaSetterFunc returns a template function that generates a setter method for a field.
+func makeJavaSetterFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapping) func(ir.IRField) string {
+	javaType := makeJavaTypeFunc(formatMappings)
+	return func(field ir.IRField) string {
+		fieldName := field.Extensions["x-java-name"]
+		if fieldName == "" {
+			fieldName = casing.ToCamelCase(field.Name)
+		}
+		typeName := javaType(&field.Type, field.Required)
+		pascalName := casing.ToPascalCase(field.Name)
+		return fmt.Sprintf("    public void set%s(%s %s) {\n        this.%s = %s;\n    }", pascalName, typeName, fieldName, fieldName, fieldName)
+	}
+}
+
 // getSimpleTypeName extracts the simple class name from a fully qualified name
 func getSimpleTypeName(fqn string) string {
 	if idx := strings.LastIndex(fqn, "."); idx != -1 {
@@ -360,7 +550,6 @@ func getSimpleTypeName(fqn string) string {
 	}
 	return fqn
 }
-
 
 const javaTemplate = `package {{.Package}};
 {{range .Imports}}
@@ -392,8 +581,12 @@ public class {{.Name}} {
     {{comment .Description}}
 {{- end}}
     @JsonProperty(value = "{{.JSONName}}"{{if .Required}}, required = true{{end}})
-    public {{javaType .Type .Required}} {{camel .Name}};
+{{- if hasDefault .}}
+    @JsonSetter(nulls = Nulls.SKIP)
 {{- end}}
+    public {{javaType .Type .Required}} {{javaFieldName .}}{{if hasDefault .}}{{javaDefault .}}{{else}}{{javaInit .Type}}{{end}};
+{{- end}}
+{{- javaConstructor .}}
 }
 {{- end}}
 
@@ -429,7 +622,7 @@ public enum {{.Name}} {
         this.value = value;
     }
 
-    @JsonProperty
+    @JsonValue
     public int getValue() {
         return value;
     }
@@ -447,7 +640,7 @@ public enum {{.Name}} {
         this.value = value;
     }
 
-    @JsonProperty
+    @JsonValue
     public String getValue() {
         return value;
     }
@@ -506,7 +699,7 @@ import {{.}};
 {{- end}}
 {{- with .Type}}
 {{- if eq .Kind "struct"}}
-{{template "class" .}}
+{{template "class" $}}
 {{- else if eq .Kind "alias"}}
 {{template "alias" .}}
 {{- else if eq .Kind "enum"}}
@@ -519,19 +712,31 @@ import {{.}};
 {{- end}}
 
 {{- define "class"}}
-{{if .Description}}
-{{comment .Description}}
+{{- if .Type.Description}}
+{{comment .Type.Description}}
 {{- end}}
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class {{.Name}} {
-{{- range .Fields}}
+public class {{.Type.Name}} {
+{{- range .Type.Fields}}
 
 {{- if .Description}}
     {{comment .Description}}
 {{- end}}
     @JsonProperty(value = "{{.JSONName}}"{{if .Required}}, required = true{{end}})
-    public {{javaType .Type .Required}} {{camel .Name}};
+{{- if hasDefault .}}
+    @JsonSetter(nulls = Nulls.SKIP)
 {{- end}}
+    {{if $.Accessors}}private{{else}}public{{end}} {{javaType .Type .Required}} {{javaFieldName .}}{{if hasDefault .}}{{javaDefault .}}{{else}}{{javaInit .Type}}{{end}};
+{{- end}}
+{{- if $.Accessors}}
+{{- range .Type.Fields}}
+
+{{javaGetter .}}
+
+{{javaSetter .}}
+{{- end}}
+{{- end}}
+{{- javaConstructor .Type}}
 }
 {{- end}}
 
@@ -567,7 +772,7 @@ public enum {{.Name}} {
         this.value = value;
     }
 
-    @JsonProperty
+    @JsonValue
     public int getValue() {
         return value;
     }
@@ -585,7 +790,7 @@ public enum {{.Name}} {
         this.value = value;
     }
 
-    @JsonProperty
+    @JsonValue
     public String getValue() {
         return value;
     }

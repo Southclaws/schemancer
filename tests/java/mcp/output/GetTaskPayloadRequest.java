@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /** A request to retrieve the result of a completed task. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GetTaskPayloadRequest {
@@ -15,4 +14,8 @@ public class GetTaskPayloadRequest {
     public String method;
     @JsonProperty(value = "params", required = true)
     public GetTaskPayloadRequestParams params;
+
+    public GetTaskPayloadRequest() {
+        this.params = new GetTaskPayloadRequestParams();
+    }
 }

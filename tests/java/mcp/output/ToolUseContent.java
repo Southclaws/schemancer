@@ -2,8 +2,8 @@ package com.example.mcp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.HashMap;
 import java.util.Map;
-
 
 /** A request from the assistant to call a tool. */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -15,7 +15,7 @@ public class ToolUseContent {
  * See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
  */
     @JsonProperty(value = "_meta")
-    public Map<String, Object> meta;
+    public Map<String, Object> meta = new HashMap<>();
     /**
  * A unique identifier for this tool use.
  * 
@@ -25,7 +25,7 @@ public class ToolUseContent {
     public String id;
     /** The arguments to pass to the tool, conforming to the tool's input schema. */
     @JsonProperty(value = "input", required = true)
-    public Map<String, Object> input;
+    public Map<String, Object> input = new HashMap<>();
     /** The name of the tool to call. */
     @JsonProperty(value = "name", required = true)
     public String name;

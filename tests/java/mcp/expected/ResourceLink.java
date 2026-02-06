@@ -3,9 +3,10 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 /**
  * A resource that the server is capable of reading, included in a prompt or tool call result.
@@ -16,7 +17,7 @@ import java.util.Map;
 public class ResourceLink {
     /** See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage. */
     @JsonProperty(value = "_meta")
-    public Map<String, Object> meta;
+    public Map<String, Object> meta = new HashMap<>();
     /** Optional annotations for the client. */
     @JsonProperty(value = "annotations")
     public Annotations annotations;
@@ -39,7 +40,7 @@ public class ResourceLink {
  * - `image/webp` - WebP images (modern, efficient format)
  */
     @JsonProperty(value = "icons")
-    public List<Icon> icons;
+    public List<Icon> icons = new ArrayList<>();
     /** The MIME type of this resource, if known. */
     @JsonProperty(value = "mimeType")
     public String mimeType;
@@ -68,4 +69,8 @@ public class ResourceLink {
     /** The URI of this resource. */
     @JsonProperty(value = "uri", required = true)
     public URI uri;
+
+    public ResourceLink() {
+        this.annotations = new Annotations();
+    }
 }

@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /** Common params for any task-augmented request. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TaskAugmentedRequestParams {
@@ -20,4 +19,9 @@ public class TaskAugmentedRequestParams {
  */
     @JsonProperty(value = "task")
     public TaskMetadata task;
+
+    public TaskAugmentedRequestParams() {
+        this.meta = new TaskAugmentedRequestParamsMeta();
+        this.task = new TaskMetadata();
+    }
 }

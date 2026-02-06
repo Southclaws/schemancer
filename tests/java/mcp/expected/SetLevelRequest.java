@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /** A request from the client to the server, to enable or adjust logging. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SetLevelRequest {
@@ -15,4 +14,8 @@ public class SetLevelRequest {
     public String method;
     @JsonProperty(value = "params", required = true)
     public SetLevelRequestParams params;
+
+    public SetLevelRequest() {
+        this.params = new SetLevelRequestParams();
+    }
 }

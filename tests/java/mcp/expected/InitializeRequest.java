@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /** This request is sent from the client to the server when it first connects, asking it to begin initialization. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class InitializeRequest {
@@ -15,4 +14,8 @@ public class InitializeRequest {
     public String method;
     @JsonProperty(value = "params", required = true)
     public InitializeRequestParams params;
+
+    public InitializeRequest() {
+        this.params = new InitializeRequestParams();
+    }
 }

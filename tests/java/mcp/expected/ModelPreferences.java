@@ -2,8 +2,8 @@ package com.example.mcp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
 import java.util.List;
-
 
 /**
  * The server's preferences for model selection, requested of the client during sampling.
@@ -37,7 +37,7 @@ public class ModelPreferences {
  * MAY still use the priorities to select from ambiguous matches.
  */
     @JsonProperty(value = "hints")
-    public List<ModelHint> hints;
+    public List<ModelHint> hints = new ArrayList<>();
     /**
  * How much to prioritize intelligence and capabilities when selecting a
  * model. A value of 0 means intelligence is not important, while a value of 1

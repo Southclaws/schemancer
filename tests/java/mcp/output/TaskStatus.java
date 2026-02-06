@@ -1,7 +1,6 @@
 package com.example.mcp;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 /** The status of a task. */
 
@@ -18,7 +17,7 @@ public enum TaskStatus {
         this.value = value;
     }
 
-    @JsonProperty
+    @JsonValue
     public String getValue() {
         return value;
     }

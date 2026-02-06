@@ -2,19 +2,20 @@ package com.example.mcp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 /** The server's response to a tool call. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CallToolResult {
     /** See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage. */
     @JsonProperty(value = "_meta")
-    public Map<String, Object> meta;
+    public Map<String, Object> meta = new HashMap<>();
     /** A list of content objects that represent the unstructured result of the tool call. */
     @JsonProperty(value = "content", required = true)
-    public List<ContentBlock> content;
+    public List<ContentBlock> content = new ArrayList<>();
     /**
  * Whether the tool call ended in an error.
  * 
@@ -33,5 +34,5 @@ public class CallToolResult {
     public Boolean isError;
     /** An optional JSON object that represents the structured result of the tool call. */
     @JsonProperty(value = "structuredContent")
-    public Map<String, Object> structuredContent;
+    public Map<String, Object> structuredContent = new HashMap<>();
 }

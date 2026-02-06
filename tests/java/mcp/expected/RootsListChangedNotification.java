@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /**
  * A notification from the client to the server, informing it that the list of roots has changed.
  * This notification should be sent whenever the client adds, removes, or modifies any root.
@@ -17,4 +16,8 @@ public class RootsListChangedNotification {
     public String method;
     @JsonProperty(value = "params")
     public NotificationParams params;
+
+    public RootsListChangedNotification() {
+        this.params = new NotificationParams();
+    }
 }

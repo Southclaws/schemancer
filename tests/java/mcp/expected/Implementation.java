@@ -3,8 +3,8 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
-
 
 /** Describes the MCP implementation. */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -30,7 +30,7 @@ public class Implementation {
  * - `image/webp` - WebP images (modern, efficient format)
  */
     @JsonProperty(value = "icons")
-    public List<Icon> icons;
+    public List<Icon> icons = new ArrayList<>();
     /** Intended for programmatic or logical use, but used as a display name in past specs or fallback (if title isn't present). */
     @JsonProperty(value = "name", required = true)
     public String name;

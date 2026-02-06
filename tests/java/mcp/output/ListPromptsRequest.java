@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /** Sent from the client to request a list of prompts and prompt templates the server has. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ListPromptsRequest {
@@ -15,4 +14,8 @@ public class ListPromptsRequest {
     public String method;
     @JsonProperty(value = "params")
     public PaginatedRequestParams params;
+
+    public ListPromptsRequest() {
+        this.params = new PaginatedRequestParams();
+    }
 }

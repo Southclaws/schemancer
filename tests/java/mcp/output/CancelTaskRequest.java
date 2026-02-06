@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /** A request to cancel a task. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CancelTaskRequest {
@@ -15,4 +14,8 @@ public class CancelTaskRequest {
     public String method;
     @JsonProperty(value = "params", required = true)
     public CancelTaskRequestParams params;
+
+    public CancelTaskRequest() {
+        this.params = new CancelTaskRequestParams();
+    }
 }

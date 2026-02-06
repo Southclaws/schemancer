@@ -2,8 +2,8 @@ package com.example.mcp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.HashMap;
 import java.util.Map;
-
 
 /** Capabilities a client may support. Known capabilities are defined here, in this schema, but this is not a closed set: any client can define its own, additional capabilities. */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -13,7 +13,7 @@ public class ClientCapabilities {
     public ClientCapabilitiesElicitation elicitation;
     /** Experimental, non-standard capabilities that the client supports. */
     @JsonProperty(value = "experimental")
-    public Map<String, Object> experimental;
+    public Map<String, Object> experimental = new HashMap<>();
     /** Present if the client supports listing roots. */
     @JsonProperty(value = "roots")
     public ClientCapabilitiesRoots roots;
@@ -23,4 +23,11 @@ public class ClientCapabilities {
     /** Present if the client supports task-augmented requests. */
     @JsonProperty(value = "tasks")
     public ClientCapabilitiesTasks tasks;
+
+    public ClientCapabilities() {
+        this.elicitation = new ClientCapabilitiesElicitation();
+        this.roots = new ClientCapabilitiesRoots();
+        this.sampling = new ClientCapabilitiesSampling();
+        this.tasks = new ClientCapabilitiesTasks();
+    }
 }

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.URI;
 
-
 /** Common parameters when working with resources. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ResourceRequestParams {
@@ -14,4 +13,8 @@ public class ResourceRequestParams {
     /** The URI of the resource. The URI can use any protocol; it is up to the server how to interpret it. */
     @JsonProperty(value = "uri", required = true)
     public URI uri;
+
+    public ResourceRequestParams() {
+        this.meta = new ResourceRequestParamsMeta();
+    }
 }

@@ -2,9 +2,10 @@ package com.example.mcp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 /**
  * An optional JSON Schema object defining the structure of the tool's output returned in
@@ -18,9 +19,9 @@ public class ToolOutputSchema {
     @JsonProperty(value = "$schema")
     public String schema;
     @JsonProperty(value = "properties")
-    public Map<String, Object> properties;
+    public Map<String, Object> properties = new HashMap<>();
     @JsonProperty(value = "required")
-    public List<String> required;
+    public List<String> required = new ArrayList<>();
     @JsonProperty(value = "type", required = true)
     public String type;
 }

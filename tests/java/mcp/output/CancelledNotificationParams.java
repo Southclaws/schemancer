@@ -2,15 +2,15 @@ package com.example.mcp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.HashMap;
 import java.util.Map;
-
 
 /** Parameters for a `notifications/cancelled` notification. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CancelledNotificationParams {
     /** See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage. */
     @JsonProperty(value = "_meta")
-    public Map<String, Object> meta;
+    public Map<String, Object> meta = new HashMap<>();
     /** An optional string describing the reason for the cancellation. This MAY be logged or presented to the user. */
     @JsonProperty(value = "reason")
     public String reason;

@@ -1,7 +1,6 @@
 package com.example.mcp;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * The severity of a log message.
@@ -26,7 +25,7 @@ public enum LoggingLevel {
         this.value = value;
     }
 
-    @JsonProperty
+    @JsonValue
     public String getValue() {
         return value;
     }

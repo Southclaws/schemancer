@@ -7,7 +7,6 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FormattedTypes {
     @JsonProperty(value = "birthDate")

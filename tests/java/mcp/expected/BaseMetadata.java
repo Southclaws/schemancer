@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /** Base interface for metadata with name (identifier) and title (display name) properties. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaseMetadata {

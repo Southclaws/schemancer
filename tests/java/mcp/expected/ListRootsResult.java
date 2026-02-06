@@ -2,9 +2,10 @@ package com.example.mcp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 /**
  * The client's response to a roots/list request from the server.
@@ -15,7 +16,7 @@ import java.util.Map;
 public class ListRootsResult {
     /** See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage. */
     @JsonProperty(value = "_meta")
-    public Map<String, Object> meta;
+    public Map<String, Object> meta = new HashMap<>();
     @JsonProperty(value = "roots", required = true)
-    public List<Root> roots;
+    public List<Root> roots = new ArrayList<>();
 }

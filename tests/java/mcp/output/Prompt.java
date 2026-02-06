@@ -2,19 +2,20 @@ package com.example.mcp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 /** A prompt or prompt template that the server offers. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Prompt {
     /** See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage. */
     @JsonProperty(value = "_meta")
-    public Map<String, Object> meta;
+    public Map<String, Object> meta = new HashMap<>();
     /** A list of arguments to use for templating the prompt. */
     @JsonProperty(value = "arguments")
-    public List<PromptArgument> arguments;
+    public List<PromptArgument> arguments = new ArrayList<>();
     /** An optional description of what this prompt provides */
     @JsonProperty(value = "description")
     public String description;
@@ -30,7 +31,7 @@ public class Prompt {
  * - `image/webp` - WebP images (modern, efficient format)
  */
     @JsonProperty(value = "icons")
-    public List<Icon> icons;
+    public List<Icon> icons = new ArrayList<>();
     /** Intended for programmatic or logical use, but used as a display name in past specs or fallback (if title isn't present). */
     @JsonProperty(value = "name", required = true)
     public String name;

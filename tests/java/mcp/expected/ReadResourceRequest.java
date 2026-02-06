@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /** Sent from the client to the server, to read a specific resource URI. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ReadResourceRequest {
@@ -15,4 +14,8 @@ public class ReadResourceRequest {
     public String method;
     @JsonProperty(value = "params", required = true)
     public ReadResourceRequestParams params;
+
+    public ReadResourceRequest() {
+        this.params = new ReadResourceRequestParams();
+    }
 }

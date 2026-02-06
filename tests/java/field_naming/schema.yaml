@@ -1,0 +1,17 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$defs:
+  FlowSpec:
+    type: object
+    properties:
+      nodes:
+        type: array
+        items:
+          type: string
+        x-java-name: tasks
+      api-key:
+        type: string
+        x-java-name: apiKey
+      regular_field:
+        type: string
+    required:
+      - nodes

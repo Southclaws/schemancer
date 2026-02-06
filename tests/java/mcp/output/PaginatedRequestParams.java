@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /** Common parameters for paginated requests. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PaginatedRequestParams {
@@ -16,4 +15,8 @@ public class PaginatedRequestParams {
  */
     @JsonProperty(value = "cursor")
     public String cursor;
+
+    public PaginatedRequestParams() {
+        this.meta = new PaginatedRequestParamsMeta();
+    }
 }

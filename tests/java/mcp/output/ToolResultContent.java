@@ -2,9 +2,10 @@ package com.example.mcp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 /** The result of a tool use, provided by the user back to the assistant. */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -16,7 +17,7 @@ public class ToolResultContent {
  * See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
  */
     @JsonProperty(value = "_meta")
-    public Map<String, Object> meta;
+    public Map<String, Object> meta = new HashMap<>();
     /**
  * The unstructured result content of the tool use.
  * 
@@ -24,7 +25,7 @@ public class ToolResultContent {
  * audio, resource links, and embedded resources.
  */
     @JsonProperty(value = "content", required = true)
-    public List<ContentBlock> content;
+    public List<ContentBlock> content = new ArrayList<>();
     /**
  * Whether the tool use resulted in an error.
  * 
@@ -39,7 +40,7 @@ public class ToolResultContent {
  * If the tool defined an outputSchema, this SHOULD conform to that schema.
  */
     @JsonProperty(value = "structuredContent")
-    public Map<String, Object> structuredContent;
+    public Map<String, Object> structuredContent = new HashMap<>();
     /**
  * The ID of the tool use this result corresponds to.
  * 

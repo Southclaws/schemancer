@@ -191,6 +191,11 @@ func getGeneratorOptions(cmd *cobra.Command, cfg *config.Config, language string
 		}
 		genOpts = append(genOpts, typescript.WithBrandedTypes(branded))
 
+		// Resolve filename: config > default ("types.ts")
+		if cfg != nil && cfg.TypeScript != nil && cfg.TypeScript.Filename != "" {
+			genOpts = append(genOpts, typescript.WithFilename(cfg.TypeScript.Filename))
+		}
+
 	case "java":
 		// Resolve package name: CLI flag > config > default
 		pkg := "generated"
@@ -201,6 +206,11 @@ func getGeneratorOptions(cmd *cobra.Command, cfg *config.Config, language string
 			pkg = goPackage
 		}
 		genOpts = append(genOpts, java.WithPackageName(pkg))
+
+		// Resolve accessors: config > default (false)
+		if cfg != nil && cfg.Java != nil && cfg.Java.Accessors {
+			genOpts = append(genOpts, java.WithAccessors(true))
+		}
 
 	case "python":
 		// Python has no special options yet

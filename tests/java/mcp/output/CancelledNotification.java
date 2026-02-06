@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /**
  * This notification can be sent by either side to indicate that it is cancelling a previously-issued request.
  * 
@@ -23,4 +22,8 @@ public class CancelledNotification {
     public String method;
     @JsonProperty(value = "params", required = true)
     public CancelledNotificationParams params;
+
+    public CancelledNotification() {
+        this.params = new CancelledNotificationParams();
+    }
 }

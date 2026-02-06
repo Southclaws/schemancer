@@ -44,6 +44,7 @@ type TypeScriptZodConfig struct {
 type JavaConfig struct {
 	Output         string                    `yaml:"output,omitempty"`
 	Package        string                    `yaml:"package,omitempty"`
+	Accessors      bool                      `yaml:"accessors,omitempty"`
 	FormatMappings map[string]*FormatMapping `yaml:"format_mappings,omitempty"`
 }
 

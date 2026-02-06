@@ -1,0 +1,28 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$defs:
+  ServerConfig:
+    type: object
+    description: Server configuration with default values
+    properties:
+      host:
+        type: string
+        default: "localhost"
+        description: The hostname to bind to
+      port:
+        type: integer
+        default: 8080
+      debug:
+        type: boolean
+        default: false
+      maxRetries:
+        type: integer
+        default: 3
+      timeout:
+        type: number
+        default: 30.0
+      tags:
+        type: array
+        items:
+          type: string
+    required:
+      - host

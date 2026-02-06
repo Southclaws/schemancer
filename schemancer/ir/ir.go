@@ -44,6 +44,14 @@ type IRField struct {
 	JSONName    string
 	Type        IRTypeRef
 	Required    bool
+	Default     *IRDefault        // Default value from JSON Schema "default" keyword
+	Extensions  map[string]string // Language-specific extensions (x-java-name, x-go-name, etc.)
+}
+
+// IRDefault represents a default value for a field from the JSON Schema "default" keyword.
+type IRDefault struct {
+	RawValue string    // The raw JSON value as a string (e.g., "1", "\"hello\"", "true")
+	Builtin  IRBuiltin // The type of the default value for type-aware rendering
 }
 
 type IRTypeRef struct {

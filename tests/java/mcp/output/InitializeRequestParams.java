@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /** Parameters for an `initialize` request. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class InitializeRequestParams {
@@ -17,4 +16,10 @@ public class InitializeRequestParams {
     /** The latest version of the Model Context Protocol that the client supports. The client MAY decide to support older versions as well. */
     @JsonProperty(value = "protocolVersion", required = true)
     public String protocolVersion;
+
+    public InitializeRequestParams() {
+        this.meta = new InitializeRequestParamsMeta();
+        this.capabilities = new ClientCapabilities();
+        this.clientInfo = new Implementation();
+    }
 }

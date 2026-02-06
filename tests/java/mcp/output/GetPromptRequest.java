@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /** Used by the client to get a prompt provided by the server. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GetPromptRequest {
@@ -15,4 +14,8 @@ public class GetPromptRequest {
     public String method;
     @JsonProperty(value = "params", required = true)
     public GetPromptRequestParams params;
+
+    public GetPromptRequest() {
+        this.params = new GetPromptRequestParams();
+    }
 }

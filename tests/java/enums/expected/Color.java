@@ -1,7 +1,6 @@
 package com.example.generated;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum Color {
     RED("red"),
@@ -15,7 +14,7 @@ public enum Color {
         this.value = value;
     }
 
-    @JsonProperty
+    @JsonValue
     public String getValue() {
         return value;
     }

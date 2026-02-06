@@ -2,8 +2,8 @@ package com.example.mcp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
 import java.util.List;
-
 
 /** Optional annotations for the client. The client can use annotations to inform how objects are used or displayed */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -14,7 +14,7 @@ public class Annotations {
  * It can include multiple entries to indicate content useful for multiple audiences (e.g., `["user", "assistant"]`).
  */
     @JsonProperty(value = "audience")
-    public List<Role> audience;
+    public List<Role> audience = new ArrayList<>();
     /**
  * The moment the resource was last modified, as an ISO 8601 formatted string.
  * 

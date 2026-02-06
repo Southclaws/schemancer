@@ -3,7 +3,6 @@ package com.example.mcp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 /** A successful (non-error) response to a request. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JSONRPCResultResponse {
@@ -13,4 +12,8 @@ public class JSONRPCResultResponse {
     public String jsonrpc;
     @JsonProperty(value = "result", required = true)
     public Result result;
+
+    public JSONRPCResultResponse() {
+        this.result = new Result();
+    }
 }

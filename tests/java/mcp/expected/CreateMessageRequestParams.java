@@ -2,8 +2,8 @@ package com.example.mcp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
 import java.util.List;
-
 
 /** Parameters for a `sampling/createMessage` request. */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -28,7 +28,7 @@ public class CreateMessageRequestParams {
     @JsonProperty(value = "maxTokens", required = true)
     public int maxTokens;
     @JsonProperty(value = "messages", required = true)
-    public List<SamplingMessage> messages;
+    public List<SamplingMessage> messages = new ArrayList<>();
     /** Optional metadata to pass through to the LLM provider. The format of this metadata is provider-specific. */
     @JsonProperty(value = "metadata")
     public CreateMessageRequestParamsMetadata metadata;
@@ -36,7 +36,7 @@ public class CreateMessageRequestParams {
     @JsonProperty(value = "modelPreferences")
     public ModelPreferences modelPreferences;
     @JsonProperty(value = "stopSequences")
-    public List<String> stopSequences;
+    public List<String> stopSequences = new ArrayList<>();
     /** An optional system prompt the server wants to use for sampling. The client MAY modify or omit this prompt. */
     @JsonProperty(value = "systemPrompt")
     public String systemPrompt;
@@ -64,5 +64,13 @@ public class CreateMessageRequestParams {
  * The client MUST return an error if this field is provided but ClientCapabilities.sampling.tools is not declared.
  */
     @JsonProperty(value = "tools")
-    public List<Tool> tools;
+    public List<Tool> tools = new ArrayList<>();
+
+    public CreateMessageRequestParams() {
+        this.meta = new CreateMessageRequestParamsMeta();
+        this.metadata = new CreateMessageRequestParamsMetadata();
+        this.modelPreferences = new ModelPreferences();
+        this.task = new TaskMetadata();
+        this.toolChoice = new ToolChoice();
+    }
 }
