@@ -69,13 +69,25 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 	recursiveFields := findRecursiveFields(data.Types)
 	recursiveTypes := findRecursiveTypes(data.Types)
 
+	// Identify recursive union types where "typeof XSchema" in a getter
+	// return type annotation would create a circular type reference.
+	// Discriminated unions directly reference their variants (non-lazily),
+	// so TypeScript can't break the cycle through getter deferred resolution.
+	unsafeTypeofTypes := make(map[string]bool)
+	for _, t := range data.Types {
+		if (t.Kind == ir.IRKindDiscriminatedUnion || t.Kind == ir.IRKindUnion) && recursiveTypes[t.Name] {
+			unsafeTypeofTypes[t.Name] = true
+		}
+	}
+
 	funcs := template.FuncMap{
 		"pascal":    casing.ToPascalCase,
 		"camel":     casing.ToCamelCase,
 		"lower":     strings.ToLower,
 		"upper":     strings.ToUpper,
-		"zodType":   makeZodTypeFunc(formatMappings),
-		"comment":   formatComment,
+		"zodType":       makeZodTypeFunc(formatMappings),
+		"zodReturnType": makeZodReturnTypeFunc(formatMappings, unsafeTypeofTypes),
+		"comment":       formatComment,
 		"hasPrefix": strings.HasPrefix,
 		"export":    func() string { return exportKeyword(cfg.exportTypes) },
 		"isIntEnum": isIntEnum,
@@ -377,6 +389,69 @@ func makeZodTypeFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapping
 	return zodType
 }
 
+// makeZodReturnTypeFunc creates a function that generates Zod type annotations
+// for getter return types. unsafeTypeofTypes is a set of type names (recursive
+// unions) where using "typeof XSchema" in a return type annotation would create
+// a circular type reference that TypeScript cannot resolve. For those types,
+// we fall back to "z.ZodType" to break the cycle.
+func makeZodReturnTypeFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapping, unsafeTypeofTypes map[string]bool) func(*ir.IRTypeRef, bool) string {
+	var inner func(*ir.IRTypeRef) string
+	inner = func(ref *ir.IRTypeRef) string {
+		var baseType string
+
+		// Check format first
+		if _, ok := formatMappings[ref.Format]; ok {
+			isStringFormat := ref.Format == ir.IRFormatUUID || ref.Format == ir.IRFormatEmail ||
+				ref.Format == ir.IRFormatURI || ref.Format == ir.IRFormatByte
+			if isStringFormat {
+				baseType = "z.ZodString"
+			} else {
+				baseType = "z.ZodType"
+			}
+		}
+
+		if baseType == "" {
+			if ref.Builtin != ir.IRBuiltinNone {
+				switch ref.Builtin {
+				case ir.IRBuiltinString:
+					baseType = "z.ZodString"
+				case ir.IRBuiltinInt, ir.IRBuiltinFloat:
+					baseType = "z.ZodNumber"
+				case ir.IRBuiltinBool:
+					baseType = "z.ZodBoolean"
+				case ir.IRBuiltinAny:
+					baseType = "z.ZodUnknown"
+				}
+			} else if ref.Array != nil {
+				baseType = "z.ZodArray<" + inner(ref.Array) + ">"
+			} else if ref.Map != nil {
+				baseType = "z.ZodRecord<z.ZodString, " + inner(ref.Map) + ">"
+			} else if ref.Name != "" {
+				if unsafeTypeofTypes[ref.Name] {
+					baseType = "z.ZodType"
+				} else {
+					baseType = "typeof " + ref.Name + "Schema"
+				}
+			} else {
+				baseType = "z.ZodType"
+			}
+		}
+
+		if ref.Nullable {
+			baseType = "z.ZodNullable<" + baseType + ">"
+		}
+
+		return baseType
+	}
+
+	return func(ref *ir.IRTypeRef, required bool) string {
+		result := inner(ref)
+		if !required {
+			result = "z.ZodOptional<" + result + ">"
+		}
+		return result
+	}
+}
 
 const zodTemplate = `import { z } from "zod";
 {{range $i, $t := .Types}}
@@ -399,7 +474,7 @@ const zodTemplate = `import { z } from "zod";
 {{export}}const {{.Name}}Schema = z.object({
 {{- range $i, $f := .Fields}}
 {{- if isRecursiveField $.Name $f.JSONName}}
-  get {{$f.JSONName}}() { return {{zodType $f.Type}}{{if not $f.Required}}.optional(){{end}}; },
+  get {{$f.JSONName}}(): {{zodReturnType $f.Type $f.Required}} { return {{zodType $f.Type}}{{if not $f.Required}}.optional(){{end}}; },
 {{- else}}
   {{$f.JSONName}}: {{zodType $f.Type}}{{if not $f.Required}}.optional(){{end}},
 {{- end}}
@@ -444,7 +519,7 @@ const zodTemplate = `import { z } from "zod";
 {{- range .Type.Fields}}
 {{- if ne .JSONName $.Union.DiscriminatorJSON}}
 {{- if isRecursiveField $v.Name .JSONName}}
-  get {{.JSONName}}() { return {{zodType .Type}}{{if not .Required}}.optional(){{end}}; },
+  get {{.JSONName}}(): {{zodReturnType .Type .Required}} { return {{zodType .Type}}{{if not .Required}}.optional(){{end}}; },
 {{- else}}
   {{.JSONName}}: {{zodType .Type}}{{if not .Required}}.optional(){{end}},
 {{- end}}
@@ -457,7 +532,11 @@ const zodTemplate = `import { z } from "zod";
 {{- if .Description}}
 {{comment .Description}}
 {{end -}}
+{{- if isRecursiveType .Name -}}
+{{export}}const {{.Name}}Schema = z.union([
+{{- else -}}
 {{export}}const {{.Name}}Schema = z.discriminatedUnion("{{.Union.DiscriminatorJSON}}", [
+{{- end}}
 {{- range $i, $v := .Union.Variants}}
   {{$v.Name}}Schema,
 {{- end}}

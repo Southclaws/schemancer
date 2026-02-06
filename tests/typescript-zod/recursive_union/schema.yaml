@@ -1,0 +1,64 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: Root
+type: object
+required:
+  - fields
+properties:
+  fields:
+    type: array
+    items:
+      $ref: "#/$defs/FieldSchema"
+
+$defs:
+  BaseField:
+    type: object
+    required:
+      - name
+      - type
+      - required
+    properties:
+      name:
+        type: string
+      type:
+        type: string
+      required:
+        type: boolean
+    additionalProperties: false
+
+  FieldSchema:
+    oneOf:
+      - $ref: "#/$defs/TextField"
+      - $ref: "#/$defs/ObjectField"
+      - $ref: "#/$defs/ArrayField"
+
+  TextField:
+    allOf:
+      - $ref: "#/$defs/BaseField"
+      - type: object
+        properties:
+          type: {const: text}
+        additionalProperties: false
+
+  ObjectField:
+    allOf:
+      - $ref: "#/$defs/BaseField"
+      - type: object
+        properties:
+          type: {const: object}
+          fields:
+            type: array
+            items:
+              $ref: "#/$defs/FieldSchema"
+        additionalProperties: false
+
+  ArrayField:
+    allOf:
+      - $ref: "#/$defs/BaseField"
+      - type: object
+        properties:
+          type: {const: array}
+          fields:
+            type: array
+            items:
+              $ref: "#/$defs/FieldSchema"
+        additionalProperties: false

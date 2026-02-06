@@ -14,7 +14,9 @@
       "Bash(for f in tests/multi/generated/java/*.java)",
       "Bash(for f in tests/java/mcp/output/*.java)",
       "WebFetch(domain:zod.dev)",
-      "Bash(go install:*)"
+      "Bash(go install:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run check:*)"
     ]
   }
 }
