@@ -5,67 +5,101 @@ export const BinaryTreeSchema = z.object({
   get right(): z.ZodOptional<typeof BinaryTreeSchema> { return BinaryTreeSchema.optional(); },
   value: z.number(),
 });
-export type BinaryTree = z.infer<typeof BinaryTreeSchema>;
+export interface BinaryTree {
+  left?: BinaryTree;
+  right?: BinaryTree;
+  value: number;
+}
 
 export const CategoryListSchema = z.lazy(() => z.array(CategorySchema));
-export type CategoryList = z.infer<typeof CategoryListSchema>;
+export type CategoryList = Category[];
 
 export const CategorySchema = z.object({
   get children(): z.ZodOptional<typeof CategoryListSchema> { return CategoryListSchema.optional(); },
   name: z.string(),
 });
-export type Category = z.infer<typeof CategorySchema>;
+export interface Category {
+  children?: CategoryList;
+  name: string;
+}
 
 export const EmployeeSchema = z.object({
   get department(): z.ZodOptional<typeof DepartmentSchema> { return DepartmentSchema.optional(); },
   name: z.string(),
 });
-export type Employee = z.infer<typeof EmployeeSchema>;
+export interface Employee {
+  department?: Department;
+  name: string;
+}
 
 export const TeamSchema = z.object({
   get members(): z.ZodOptional<z.ZodArray<typeof EmployeeSchema>> { return z.array(EmployeeSchema).optional(); },
   name: z.string(),
 });
-export type Team = z.infer<typeof TeamSchema>;
+export interface Team {
+  members?: Employee[];
+  name: string;
+}
 
 export const DepartmentSchema = z.object({
   name: z.string(),
   get teams(): z.ZodOptional<z.ZodArray<typeof TeamSchema>> { return z.array(TeamSchema).optional(); },
 });
-export type Department = z.infer<typeof DepartmentSchema>;
+export interface Department {
+  name: string;
+  teams?: Team[];
+}
 
 export const GraphEdgesItemSchema = z.object({
   get target(): typeof GraphSchema { return GraphSchema; },
   weight: z.number().optional(),
 });
-export type GraphEdgesItem = z.infer<typeof GraphEdgesItemSchema>;
+export interface GraphEdgesItem {
+  target: Graph;
+  weight?: number;
+}
 
 export const GraphSchema = z.object({
   get edges(): z.ZodOptional<z.ZodArray<typeof GraphEdgesItemSchema>> { return z.array(GraphEdgesItemSchema).optional(); },
   id: z.string().optional(),
 });
-export type Graph = z.infer<typeof GraphSchema>;
+export interface Graph {
+  edges?: GraphEdgesItem[];
+  id?: string;
+}
 
 export const LinkedListNodeSchema = z.object({
   data: z.number().int(),
   get next(): z.ZodOptional<typeof LinkedListNodeSchema> { return LinkedListNodeSchema.optional(); },
 });
-export type LinkedListNode = z.infer<typeof LinkedListNodeSchema>;
+export interface LinkedListNode {
+  data: number;
+  next?: LinkedListNode;
+}
 
 export const MutualBSchema = z.object({
   get a(): z.ZodOptional<typeof MutualASchema> { return MutualASchema.optional(); },
   name: z.string(),
 });
-export type MutualB = z.infer<typeof MutualBSchema>;
+export interface MutualB {
+  a?: MutualA;
+  name: string;
+}
 
 export const MutualASchema = z.object({
   get b(): z.ZodOptional<typeof MutualBSchema> { return MutualBSchema.optional(); },
   name: z.string(),
 });
-export type MutualA = z.infer<typeof MutualASchema>;
+export interface MutualA {
+  b?: MutualB;
+  name: string;
+}
 
 export const TreeNodeSchema = z.object({
   get children(): z.ZodOptional<z.ZodArray<typeof TreeNodeSchema>> { return z.array(TreeNodeSchema).optional(); },
   value: z.string(),
 });
-export type TreeNode = z.infer<typeof TreeNodeSchema>;
+export interface TreeNode {
+  children?: TreeNode[];
+  value: string;
+}

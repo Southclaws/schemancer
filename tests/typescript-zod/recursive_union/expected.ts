@@ -20,7 +20,12 @@ export const ObjectFieldSchema = z.object({
   name: z.string(),
   required: z.boolean(),
 });
-export type ObjectField = z.infer<typeof ObjectFieldSchema>;
+export interface ObjectField {
+  type: 'object';
+  fields?: FieldSchema[];
+  name: string;
+  required: boolean;
+}
 
 export const ArrayFieldSchema = z.object({
   type: z.literal("array"),
@@ -28,14 +33,19 @@ export const ArrayFieldSchema = z.object({
   name: z.string(),
   required: z.boolean(),
 });
-export type ArrayField = z.infer<typeof ArrayFieldSchema>;
+export interface ArrayField {
+  type: 'array';
+  fields?: FieldSchema[];
+  name: string;
+  required: boolean;
+}
 
 export const FieldSchemaSchema = z.union([
   TextFieldSchema,
   ObjectFieldSchema,
   ArrayFieldSchema,
 ]);
-export type FieldSchema = z.infer<typeof FieldSchemaSchema>;
+export type FieldSchema = TextField | ObjectField | ArrayField;
 
 export const RootSchema = z.object({
   fields: z.array(FieldSchemaSchema),

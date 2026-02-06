@@ -87,6 +87,7 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 		"upper":     strings.ToUpper,
 		"zodType":       makeZodTypeFunc(formatMappings),
 		"zodReturnType": makeZodReturnTypeFunc(formatMappings, unsafeTypeofTypes),
+		"tsType":        makeTsTypeFunc(),
 		"comment":       formatComment,
 		"hasPrefix": strings.HasPrefix,
 		"export":    func() string { return exportKeyword(cfg.exportTypes) },
@@ -99,6 +100,10 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 		},
 		"isRecursiveType": func(typeName string) bool {
 			return recursiveTypes[typeName]
+		},
+		"hasRecursiveFields": func(typeName string) bool {
+			fields, ok := recursiveFields[typeName]
+			return ok && len(fields) > 0
 		},
 	}
 
@@ -389,6 +394,50 @@ func makeZodTypeFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapping
 	return zodType
 }
 
+// makeTsTypeFunc creates a function that converts IRTypeRef to TypeScript type strings.
+// Used to generate explicit interface/type declarations for recursive types
+// where z.infer would yield unknown.
+func makeTsTypeFunc() func(*ir.IRTypeRef) string {
+	var tsType func(*ir.IRTypeRef) string
+	tsType = func(ref *ir.IRTypeRef) string {
+		var baseType string
+
+		if ref.Array != nil {
+			inner := tsType(ref.Array)
+			if strings.Contains(inner, " | ") {
+				baseType = "(" + inner + ")[]"
+			} else {
+				baseType = inner + "[]"
+			}
+		} else if ref.Map != nil {
+			baseType = "Record<string, " + tsType(ref.Map) + ">"
+		} else if ref.Name != "" {
+			baseType = ref.Name
+		} else if ref.Format != "" {
+			// All standard JSON Schema formats map to string in TypeScript
+			baseType = "string"
+		} else {
+			switch ref.Builtin {
+			case ir.IRBuiltinString:
+				baseType = "string"
+			case ir.IRBuiltinInt, ir.IRBuiltinFloat:
+				baseType = "number"
+			case ir.IRBuiltinBool:
+				baseType = "boolean"
+			default:
+				baseType = "unknown"
+			}
+		}
+
+		if ref.Nullable {
+			baseType += " | null"
+		}
+
+		return baseType
+	}
+	return tsType
+}
+
 // makeZodReturnTypeFunc creates a function that generates Zod type annotations
 // for getter return types. unsafeTypeofTypes is a set of type names (recursive
 // unions) where using "typeof XSchema" in a return type annotation would create
@@ -480,7 +529,15 @@ const zodTemplate = `import { z } from "zod";
 {{- end}}
 {{- end}}
 });
+{{- if hasRecursiveFields .Name}}
+{{export}}interface {{.Name}} {
+{{- range $i, $f := .Fields}}
+  {{$f.JSONName}}{{if not $f.Required}}?{{end}}: {{tsType $f.Type}};
+{{- end}}
+}
+{{- else}}
 {{export}}type {{.Name}} = z.infer<typeof {{.Name}}Schema>;
+{{- end -}}
 {{- end -}}
 
 {{- define "alias" -}}
@@ -489,7 +546,7 @@ const zodTemplate = `import { z } from "zod";
 {{end -}}
 {{- if isRecursiveType .Name -}}
 {{export}}const {{.Name}}Schema = z.lazy(() => {{if .Element}}{{zodType .Element}}{{else}}z.unknown(){{end}});
-{{export}}type {{.Name}} = z.infer<typeof {{.Name}}Schema>;
+{{export}}type {{.Name}} = {{if .Element}}{{tsType .Element}}{{else}}unknown{{end}};
 {{- else -}}
 {{export}}const {{.Name}}Schema = {{if .Element}}{{zodType .Element}}{{else}}z.unknown(){{end}};
 {{export}}type {{.Name}} = z.infer<typeof {{.Name}}Schema>;
@@ -526,7 +583,18 @@ const zodTemplate = `import { z } from "zod";
 {{- end}}
 {{- end}}
 });
+{{- if hasRecursiveFields .Name}}
+{{export}}interface {{.Name}} {
+  {{$.Union.DiscriminatorJSON}}: '{{.ConstValue}}';
+{{- range .Type.Fields}}
+{{- if ne .JSONName $.Union.DiscriminatorJSON}}
+  {{.JSONName}}{{if not .Required}}?{{end}}: {{tsType .Type}};
+{{- end}}
+{{- end}}
+}
+{{- else}}
 {{export}}type {{.Name}} = z.infer<typeof {{.Name}}Schema>;
+{{- end}}
 
 {{end -}}
 {{- if .Description}}
@@ -541,7 +609,11 @@ const zodTemplate = `import { z } from "zod";
   {{$v.Name}}Schema,
 {{- end}}
 ]);
+{{- if isRecursiveType .Name}}
+{{export}}type {{.Name}} = {{range $i, $v := .Union.Variants}}{{if $i}} | {{end}}{{$v.Name}}{{end}};
+{{- else}}
 {{export}}type {{.Name}} = z.infer<typeof {{.Name}}Schema>;
+{{- end -}}
 {{- end -}}
 
 {{- define "simpleunion" -}}
@@ -553,6 +625,10 @@ const zodTemplate = `import { z } from "zod";
   {{zodType $v}},
 {{- end}}
 ]);
+{{- if isRecursiveType .Name}}
+{{export}}type {{.Name}} = {{range $i, $v := .SimpleUnion.Variants}}{{if $i}} | {{end}}{{tsType $v}}{{end}};
+{{- else}}
 {{export}}type {{.Name}} = z.infer<typeof {{.Name}}Schema>;
+{{- end -}}
 {{- end -}}
 `
