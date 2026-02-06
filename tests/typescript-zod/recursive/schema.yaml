@@ -72,3 +72,54 @@ $defs:
         $ref: "#/$defs/MutualA"
     required:
       - name
+
+  # Cycle through alias type: Category -> CategoryList -> Category
+  Category:
+    type: object
+    properties:
+      name:
+        type: string
+      children:
+        $ref: "#/$defs/CategoryList"
+    required:
+      - name
+
+  CategoryList:
+    type: array
+    items:
+      $ref: "#/$defs/Category"
+
+  # 3-node struct cycle: Department -> Team -> Employee -> Department
+  Department:
+    type: object
+    properties:
+      name:
+        type: string
+      teams:
+        type: array
+        items:
+          $ref: "#/$defs/Team"
+    required:
+      - name
+
+  Team:
+    type: object
+    properties:
+      name:
+        type: string
+      members:
+        type: array
+        items:
+          $ref: "#/$defs/Employee"
+    required:
+      - name
+
+  Employee:
+    type: object
+    properties:
+      name:
+        type: string
+      department:
+        $ref: "#/$defs/Department"
+    required:
+      - name

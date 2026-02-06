@@ -7,6 +7,33 @@ export const BinaryTreeSchema = z.object({
 });
 export type BinaryTree = z.infer<typeof BinaryTreeSchema>;
 
+export const CategoryListSchema = z.lazy(() => z.array(CategorySchema));
+export type CategoryList = z.infer<typeof CategoryListSchema>;
+
+export const CategorySchema = z.object({
+  get children() { return CategoryListSchema.optional(); },
+  name: z.string(),
+});
+export type Category = z.infer<typeof CategorySchema>;
+
+export const EmployeeSchema = z.object({
+  get department() { return DepartmentSchema.optional(); },
+  name: z.string(),
+});
+export type Employee = z.infer<typeof EmployeeSchema>;
+
+export const TeamSchema = z.object({
+  get members() { return z.array(EmployeeSchema).optional(); },
+  name: z.string(),
+});
+export type Team = z.infer<typeof TeamSchema>;
+
+export const DepartmentSchema = z.object({
+  name: z.string(),
+  get teams() { return z.array(TeamSchema).optional(); },
+});
+export type Department = z.infer<typeof DepartmentSchema>;
+
 export const GraphEdgesItemSchema = z.object({
   get target() { return GraphSchema; },
   weight: z.number().optional(),

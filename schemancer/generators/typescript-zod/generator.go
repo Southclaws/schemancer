@@ -67,6 +67,7 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 
 	formatMappings := g.getFormatMappings(opts)
 	recursiveFields := findRecursiveFields(data.Types)
+	recursiveTypes := findRecursiveTypes(data.Types)
 
 	funcs := template.FuncMap{
 		"pascal":    casing.ToPascalCase,
@@ -83,6 +84,9 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 				return fields[fieldName]
 			}
 			return false
+		},
+		"isRecursiveType": func(typeName string) bool {
+			return recursiveTypes[typeName]
 		},
 	}
 
@@ -165,41 +169,107 @@ func canReach(deps map[string]map[string]bool, from, to string) bool {
 	return dfs(from)
 }
 
+// buildTypeDependencyGraph builds a dependency graph for ALL type kinds,
+// mapping each type name to the set of type names it directly references.
+func buildTypeDependencyGraph(types []ir.IRType) map[string]map[string]bool {
+	deps := make(map[string]map[string]bool)
+	for _, t := range types {
+		refs := make(map[string]bool)
+		switch t.Kind {
+		case ir.IRKindStruct:
+			for _, f := range t.Fields {
+				collectNamedRefs(&f.Type, refs)
+			}
+		case ir.IRKindAlias:
+			if t.Element != nil {
+				collectNamedRefs(t.Element, refs)
+			}
+		case ir.IRKindDiscriminatedUnion:
+			if t.Union != nil {
+				// The union type itself depends on each variant
+				for _, v := range t.Union.Variants {
+					refs[v.Name] = true
+				}
+				// Each variant is also a pseudo-type in the graph
+				for _, v := range t.Union.Variants {
+					variantRefs := make(map[string]bool)
+					for _, f := range v.Type.Fields {
+						collectNamedRefs(&f.Type, variantRefs)
+					}
+					deps[v.Name] = variantRefs
+				}
+			}
+		case ir.IRKindUnion:
+			if t.SimpleUnion != nil {
+				for i := range t.SimpleUnion.Variants {
+					collectNamedRefs(&t.SimpleUnion.Variants[i], refs)
+				}
+			}
+		}
+		deps[t.Name] = refs
+	}
+	return deps
+}
+
 // findRecursiveFields identifies fields in struct types that participate in
 // reference cycles. Returns a map of type name -> set of field JSON names
 // that need getter syntax for Zod v4 recursive schemas.
 func findRecursiveFields(types []ir.IRType) map[string]map[string]bool {
-	// Build dependency graph: type -> set of types it references
-	deps := make(map[string]map[string]bool)
-	for _, t := range types {
-		if t.Kind != ir.IRKindStruct {
-			continue
-		}
-		refs := make(map[string]bool)
-		for _, f := range t.Fields {
-			collectNamedRefs(&f.Type, refs)
-		}
-		deps[t.Name] = refs
-	}
+	deps := buildTypeDependencyGraph(types)
 
 	// For each struct type, check which fields reference types that can
 	// reach back to this type (forming a cycle)
 	result := make(map[string]map[string]bool)
 	for _, t := range types {
-		if t.Kind != ir.IRKindStruct {
-			continue
-		}
-		for _, f := range t.Fields {
-			fieldRefs := make(map[string]bool)
-			collectNamedRefs(&f.Type, fieldRefs)
-			for ref := range fieldRefs {
-				if canReach(deps, ref, t.Name) {
-					if result[t.Name] == nil {
-						result[t.Name] = make(map[string]bool)
+		if t.Kind == ir.IRKindStruct {
+			for _, f := range t.Fields {
+				fieldRefs := make(map[string]bool)
+				collectNamedRefs(&f.Type, fieldRefs)
+				for ref := range fieldRefs {
+					if canReach(deps, ref, t.Name) {
+						if result[t.Name] == nil {
+							result[t.Name] = make(map[string]bool)
+						}
+						result[t.Name][f.JSONName] = true
+						break
 					}
-					result[t.Name][f.JSONName] = true
-					break
 				}
+			}
+		}
+		// Also check discriminated union variant fields
+		if t.Kind == ir.IRKindDiscriminatedUnion && t.Union != nil {
+			for _, v := range t.Union.Variants {
+				for _, f := range v.Type.Fields {
+					fieldRefs := make(map[string]bool)
+					collectNamedRefs(&f.Type, fieldRefs)
+					for ref := range fieldRefs {
+						if canReach(deps, ref, v.Name) {
+							if result[v.Name] == nil {
+								result[v.Name] = make(map[string]bool)
+							}
+							result[v.Name][f.JSONName] = true
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+	return result
+}
+
+// findRecursiveTypes identifies types that participate in reference cycles.
+// Returns a set of type names that are part of at least one cycle.
+func findRecursiveTypes(types []ir.IRType) map[string]bool {
+	deps := buildTypeDependencyGraph(types)
+	result := make(map[string]bool)
+	for _, t := range types {
+		// A type is in a cycle if any of its direct dependencies can
+		// reach back to it (requiring at least one edge traversal).
+		for dep := range deps[t.Name] {
+			if canReach(deps, dep, t.Name) {
+				result[t.Name] = true
+				break
 			}
 		}
 	}
@@ -342,8 +412,13 @@ const zodTemplate = `import { z } from "zod";
 {{- if .Description}}
 {{comment .Description}}
 {{end -}}
+{{- if isRecursiveType .Name -}}
+{{export}}const {{.Name}}Schema = z.lazy(() => {{if .Element}}{{zodType .Element}}{{else}}z.unknown(){{end}});
+{{export}}type {{.Name}} = z.infer<typeof {{.Name}}Schema>;
+{{- else -}}
 {{export}}const {{.Name}}Schema = {{if .Element}}{{zodType .Element}}{{else}}z.unknown(){{end}};
 {{export}}type {{.Name}} = z.infer<typeof {{.Name}}Schema>;
+{{- end -}}
 {{- end -}}
 
 {{- define "enum" -}}
@@ -368,7 +443,11 @@ const zodTemplate = `import { z } from "zod";
   {{$.Union.DiscriminatorJSON}}: z.literal("{{.ConstValue}}"),
 {{- range .Type.Fields}}
 {{- if ne .JSONName $.Union.DiscriminatorJSON}}
+{{- if isRecursiveField $v.Name .JSONName}}
+  get {{.JSONName}}() { return {{zodType .Type}}{{if not .Required}}.optional(){{end}}; },
+{{- else}}
   {{.JSONName}}: {{zodType .Type}}{{if not .Required}}.optional(){{end}},
+{{- end}}
 {{- end}}
 {{- end}}
 });
