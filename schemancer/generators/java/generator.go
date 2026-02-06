@@ -108,9 +108,41 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 		return nil, err
 	}
 
+	variantTmpl, err := template.New("java-variant").Funcs(funcs).Parse(javaVariantTemplate)
+	if err != nil {
+		return nil, err
+	}
+
 	var files []generators.GeneratedFile
 
 	for _, t := range data.Types {
+		if t.Kind == ir.IRKindDiscriminatedUnion && t.Union != nil {
+			// Interface file
+			tplData := preparePerTypeData(cfg.packageName, t, formatMappings, cfg.accessors)
+			var buf bytes.Buffer
+			if err := tmpl.Execute(&buf, tplData); err != nil {
+				return nil, err
+			}
+			files = append(files, generators.GeneratedFile{
+				Filename: t.Name + ".java",
+				Content:  buf.Bytes(),
+			})
+
+			// One file per variant
+			for _, v := range t.Union.Variants {
+				vData := prepareVariantData(cfg.packageName, v, t, formatMappings)
+				var vBuf bytes.Buffer
+				if err := variantTmpl.Execute(&vBuf, vData); err != nil {
+					return nil, err
+				}
+				files = append(files, generators.GeneratedFile{
+					Filename: v.Name + ".java",
+					Content:  vBuf.Bytes(),
+				})
+			}
+			continue
+		}
+
 		tplData := preparePerTypeData(cfg.packageName, t, formatMappings, cfg.accessors)
 
 		var buf bytes.Buffer
@@ -190,6 +222,16 @@ type perTypeData struct {
 	Accessors bool
 }
 
+// variantData holds data for generating a single discriminated union variant file
+type variantData struct {
+	Package            string
+	Imports            []string
+	Variant            ir.IRVariant
+	UnionName          string
+	DiscriminatorField string
+	DiscriminatorJSON  string
+}
+
 func preparePerTypeData(packageName string, t ir.IRType, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, accessors bool) perTypeData {
 	importSet := make(map[string]bool)
 	hasUnion := false
@@ -198,14 +240,11 @@ func preparePerTypeData(packageName string, t ir.IRType, formatMappings map[ir.I
 		// Enums only need JsonValue for serialization/deserialization
 		importSet["com.fasterxml.jackson.annotation.JsonValue"] = true
 	} else if t.Kind == ir.IRKindDiscriminatedUnion {
+		// Interface file only needs interface-level annotations
 		hasUnion = true
 		importSet["com.fasterxml.jackson.annotation.JsonIgnoreProperties"] = true
-		importSet["com.fasterxml.jackson.annotation.JsonProperty"] = true
-		importSet["com.fasterxml.jackson.annotation.JsonCreator"] = true
 		importSet["com.fasterxml.jackson.annotation.JsonSubTypes"] = true
 		importSet["com.fasterxml.jackson.annotation.JsonTypeInfo"] = true
-		importSet["com.fasterxml.jackson.annotation.JsonTypeName"] = true
-		collectImportsFromUnion(t, formatMappings, importSet)
 	} else {
 		// Structs need JsonIgnoreProperties and JsonProperty
 		importSet["com.fasterxml.jackson.annotation.JsonIgnoreProperties"] = true
@@ -234,6 +273,32 @@ func preparePerTypeData(packageName string, t ir.IRType, formatMappings map[ir.I
 		Type:      t,
 		HasUnion:  hasUnion,
 		Accessors: accessors,
+	}
+}
+
+func prepareVariantData(packageName string, v ir.IRVariant, union ir.IRType, formatMappings map[ir.IRFormat]generators.FormatTypeMapping) variantData {
+	importSet := make(map[string]bool)
+	importSet["com.fasterxml.jackson.annotation.JsonCreator"] = true
+	importSet["com.fasterxml.jackson.annotation.JsonProperty"] = true
+	importSet["com.fasterxml.jackson.annotation.JsonTypeName"] = true
+	// Records don't initialize fields, so skip ArrayList/HashMap imports
+	for _, field := range v.Type.Fields {
+		collectImportsFromRefForAlias(&field.Type, formatMappings, importSet)
+	}
+
+	var imports []string
+	for imp := range importSet {
+		imports = append(imports, imp)
+	}
+	sort.Strings(imports)
+
+	return variantData{
+		Package:            packageName,
+		Imports:            imports,
+		Variant:            v,
+		UnionName:          union.Name,
+		DiscriminatorField: union.Union.DiscriminatorField,
+		DiscriminatorJSON:  union.Union.DiscriminatorJSON,
 	}
 }
 
@@ -818,19 +883,6 @@ public enum {{.Name}} {
 public sealed interface {{.Name}} permits {{range $i, $v := .Union.Variants}}{{if $i}}, {{end}}{{$v.Name}}{{end}} {
     String {{camel .Union.DiscriminatorField}}();
 }
-{{range .Union.Variants}}
-{{if .Type.Description}}
-{{comment .Type.Description}}
-{{end}}
-@JsonTypeName("{{.ConstValue}}")
-public record {{.Name}}(
-    @JsonProperty(value = "{{$.Union.DiscriminatorJSON}}") String {{camel $.Union.DiscriminatorField}}{{range .Type.Fields}}{{if ne .JSONName $.Union.DiscriminatorJSON}},
-    @JsonProperty(value = "{{.JSONName}}"{{if .Required}}, required = true{{end}}) {{javaType .Type .Required}} {{camel .Name}}{{end}}{{end}}
-) implements {{$.Name}} {
-    @JsonCreator
-    public {{.Name}} {}
-}
-{{- end}}
 {{- end}}
 
 {{- define "simpleunion" -}}
@@ -840,4 +892,22 @@ public record {{.Name}}(
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class {{.Name}} extends Object {}
 {{- end}}
+`
+
+// javaVariantTemplate generates a single variant record file
+const javaVariantTemplate = `package {{.Package}};
+{{range .Imports}}
+import {{.}};
+{{- end}}
+{{if .Variant.Type.Description}}
+{{comment .Variant.Type.Description}}
+{{end}}
+@JsonTypeName("{{.Variant.ConstValue}}")
+public record {{.Variant.Name}}(
+    @JsonProperty(value = "{{.DiscriminatorJSON}}") String {{camel .DiscriminatorField}}{{range .Variant.Type.Fields}}{{if ne .JSONName $.DiscriminatorJSON}},
+    @JsonProperty(value = "{{.JSONName}}"{{if .Required}}, required = true{{end}}) {{javaType .Type .Required}} {{camel .Name}}{{end}}{{end}}
+) implements {{.UnionName}} {
+    @JsonCreator
+    public {{.Variant.Name}} {}
+}
 `
