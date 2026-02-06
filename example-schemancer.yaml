@@ -37,6 +37,9 @@ typescript:
   # Output directory for generated code (enables multi-language generation)
   output: "./generated"
 
+  # Output filename (default: "types.ts")
+  filename: "types.ts"
+
   # Use null instead of undefined for optional fields
   null_optional: false
 

@@ -22,6 +22,8 @@ var DefaultFormatMappings = map[ir.IRFormat]generators.FormatTypeMapping{
 
 // config holds TypeScript-specific generator configuration
 type config struct {
+	// Output filename (default: "types.ts")
+	filename string
 	// Whether to export all types (default: true)
 	exportTypes bool
 	// Whether to use strict null checks style (T | null vs T | undefined)
@@ -61,6 +63,13 @@ func WithBrandedTypes(enabled bool) Option {
 	}}
 }
 
+// WithFilename sets the output filename (default: "types.ts")
+func WithFilename(name string) Option {
+	return Option{apply: func(c *config) {
+		c.filename = name
+	}}
+}
+
 type Generator struct{}
 
 func (g *Generator) getFormatMappings(opts generators.GeneratorOptions) map[ir.IRFormat]generators.FormatTypeMapping {
@@ -76,6 +85,7 @@ func (g *Generator) getFormatMappings(opts generators.GeneratorOptions) map[ir.I
 
 func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genOpts ...generators.GeneratorOption) ([]generators.GeneratedFile, error) {
 	cfg := &config{
+		filename:           "types.ts",
 		exportTypes:        true,
 		useNullForOptional: false,
 	}
@@ -117,7 +127,7 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 	}
 
 	return []generators.GeneratedFile{{
-		Filename: "types.ts",
+		Filename: cfg.filename,
 		Content:  buf.Bytes(),
 	}}, nil
 }

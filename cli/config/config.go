@@ -29,6 +29,7 @@ type GolangConfig struct {
 // TypeScriptConfig contains TypeScript-specific generation options.
 type TypeScriptConfig struct {
 	Output            string                    `yaml:"output,omitempty"`
+	Filename          string                    `yaml:"filename,omitempty"`
 	NullOptional      bool                      `yaml:"null_optional,omitempty"`
 	BrandedPrimitives bool                      `yaml:"branded_primitives,omitempty"`
 	FormatMappings    map[string]*FormatMapping `yaml:"format_mappings,omitempty"`
