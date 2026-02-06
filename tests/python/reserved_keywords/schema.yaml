@@ -1,0 +1,18 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: Task
+type: object
+required:
+  - class
+  - type
+  - name
+properties:
+  class:
+    type: string
+  type:
+    type: string
+  name:
+    type: string
+  import:
+    type: string
+  from:
+    type: string

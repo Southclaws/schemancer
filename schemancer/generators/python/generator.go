@@ -12,6 +12,37 @@ import (
 	"github.com/Southclaws/schemancer/schemancer/ir"
 )
 
+// pythonReservedWords is the set of Python keywords that cannot be used as identifiers.
+// Per PEP 8, the convention is to append a trailing underscore: class_ instead of class.
+var pythonReservedWords = map[string]bool{
+	"False": true, "None": true, "True": true, "and": true, "as": true,
+	"assert": true, "async": true, "await": true, "break": true, "class": true,
+	"continue": true, "def": true, "del": true, "elif": true, "else": true,
+	"except": true, "finally": true, "for": true, "from": true, "global": true,
+	"if": true, "import": true, "in": true, "is": true, "lambda": true,
+	"nonlocal": true, "not": true, "or": true, "pass": true, "raise": true,
+	"return": true, "try": true, "while": true, "with": true, "yield": true,
+}
+
+// safeSnake converts a name to snake_case and appends _ if it's a Python reserved word.
+func safeSnake(name string) string {
+	s := casing.ToSnakeCase(name)
+	if pythonReservedWords[s] {
+		return s + "_"
+	}
+	return s
+}
+
+// fieldAlias returns the JSON name as an alias if the snake_case field name is a
+// Python reserved word, otherwise returns empty string.
+func fieldAlias(name, jsonName string) string {
+	s := casing.ToSnakeCase(name)
+	if pythonReservedWords[s] {
+		return jsonName
+	}
+	return ""
+}
+
 // DefaultFormatMappings provides sensible defaults for JSON Schema formats in Python
 var DefaultFormatMappings = map[ir.IRFormat]generators.FormatTypeMapping{
 	ir.IRFormatByte:     {Type: "bytes"},
@@ -60,6 +91,8 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 
 	funcs := template.FuncMap{
 		"snake":          casing.ToSnakeCase,
+		"safeSnake":      safeSnake,
+		"fieldAlias":     fieldAlias,
 		"pascal":         casing.ToPascalCase,
 		"camel":          casing.ToCamelCase,
 		"lower":          strings.ToLower,
@@ -255,6 +288,9 @@ func collectImportsFromType(t ir.IRType, formatMappings map[ir.IRFormat]generato
 		if !field.Required {
 			*hasOptional = true
 		}
+		if pythonReservedWords[casing.ToSnakeCase(field.Name)] {
+			addImport(importSet, "pydantic", "Field")
+		}
 		collectImportsFromRef(&field.Type, formatMappings, importSet, hasOptional, hasList, hasDict, hasLiteral)
 	}
 	if t.Element != nil {
@@ -370,56 +406,58 @@ func toEnumKey(v ir.IREnumValue) string {
 	return strings.ToUpper(strings.ReplaceAll(strings.ReplaceAll(v.StringValue, "-", "_"), " ", "_"))
 }
 
-// makePythonFieldFunc returns a function that generates Pydantic Field() calls with constraints
-func makePythonFieldFunc() func(*ir.IRTypeRef, bool) string {
-	return func(ref *ir.IRTypeRef, required bool) string {
-		if ref == nil || ref.Constraints == nil {
-			if required {
-				return ""
-			}
-			return " = None"
-		}
-
-		c := ref.Constraints
+// makePythonFieldFunc returns a function that generates Pydantic Field() calls with constraints.
+// The alias parameter is non-empty when the field name is a Python reserved word and needs
+// Field(alias="original_json_name") to maintain correct JSON serialization.
+func makePythonFieldFunc() func(*ir.IRTypeRef, bool, string) string {
+	return func(ref *ir.IRTypeRef, required bool, alias string) string {
 		var parts []string
 
-		// String constraints
-		if c.MinLength != nil {
-			parts = append(parts, fmt.Sprintf("min_length=%d", *c.MinLength))
-		}
-		if c.MaxLength != nil {
-			parts = append(parts, fmt.Sprintf("max_length=%d", *c.MaxLength))
-		}
-		if c.Pattern != "" {
-			// Escape backslashes for Python string
-			pattern := strings.ReplaceAll(c.Pattern, "\\", "\\\\")
-			pattern = strings.ReplaceAll(pattern, `"`, `\"`)
-			parts = append(parts, fmt.Sprintf(`pattern=r"%s"`, pattern))
+		if alias != "" {
+			parts = append(parts, fmt.Sprintf(`alias="%s"`, alias))
 		}
 
-		// Numeric constraints
-		if c.Minimum != nil {
-			parts = append(parts, fmt.Sprintf("ge=%v", *c.Minimum))
-		}
-		if c.Maximum != nil {
-			parts = append(parts, fmt.Sprintf("le=%v", *c.Maximum))
-		}
-		if c.ExclusiveMinimum != nil {
-			parts = append(parts, fmt.Sprintf("gt=%v", *c.ExclusiveMinimum))
-		}
-		if c.ExclusiveMaximum != nil {
-			parts = append(parts, fmt.Sprintf("lt=%v", *c.ExclusiveMaximum))
-		}
-		if c.MultipleOf != nil {
-			parts = append(parts, fmt.Sprintf("multiple_of=%v", *c.MultipleOf))
-		}
+		if ref != nil && ref.Constraints != nil {
+			c := ref.Constraints
 
-		// Array constraints (min_length/max_length work for lists too)
-		if c.MinItems != nil {
-			parts = append(parts, fmt.Sprintf("min_length=%d", *c.MinItems))
-		}
-		if c.MaxItems != nil {
-			parts = append(parts, fmt.Sprintf("max_length=%d", *c.MaxItems))
+			// String constraints
+			if c.MinLength != nil {
+				parts = append(parts, fmt.Sprintf("min_length=%d", *c.MinLength))
+			}
+			if c.MaxLength != nil {
+				parts = append(parts, fmt.Sprintf("max_length=%d", *c.MaxLength))
+			}
+			if c.Pattern != "" {
+				// Escape backslashes for Python string
+				pattern := strings.ReplaceAll(c.Pattern, "\\", "\\\\")
+				pattern = strings.ReplaceAll(pattern, `"`, `\"`)
+				parts = append(parts, fmt.Sprintf(`pattern=r"%s"`, pattern))
+			}
+
+			// Numeric constraints
+			if c.Minimum != nil {
+				parts = append(parts, fmt.Sprintf("ge=%v", *c.Minimum))
+			}
+			if c.Maximum != nil {
+				parts = append(parts, fmt.Sprintf("le=%v", *c.Maximum))
+			}
+			if c.ExclusiveMinimum != nil {
+				parts = append(parts, fmt.Sprintf("gt=%v", *c.ExclusiveMinimum))
+			}
+			if c.ExclusiveMaximum != nil {
+				parts = append(parts, fmt.Sprintf("lt=%v", *c.ExclusiveMaximum))
+			}
+			if c.MultipleOf != nil {
+				parts = append(parts, fmt.Sprintf("multiple_of=%v", *c.MultipleOf))
+			}
+
+			// Array constraints (min_length/max_length work for lists too)
+			if c.MinItems != nil {
+				parts = append(parts, fmt.Sprintf("min_length=%d", *c.MinItems))
+			}
+			if c.MaxItems != nil {
+				parts = append(parts, fmt.Sprintf("max_length=%d", *c.MaxItems))
+			}
 		}
 
 		if len(parts) == 0 {
@@ -468,7 +506,7 @@ class {{.Name}}(BaseModel):
 {{- if .Description}}
 {{fieldComment .Description}}
 {{- end}}
-    {{snake .Name}}: {{pythonType .Type .Required}}{{pythonField .Type .Required}}
+    {{safeSnake .Name}}: {{pythonType .Type .Required}}{{pythonField .Type .Required (fieldAlias .Name .JSONName)}}
 {{- end}}
 {{- end}}
 {{- end}}
@@ -516,13 +554,13 @@ class {{.Name}}(str, Enum):
 class {{.Name}}(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    {{snake $.Union.DiscriminatorField}}: Literal[{{literalValue .ConstValue}}]
+    {{safeSnake $.Union.DiscriminatorField}}: Literal[{{literalValue .ConstValue}}]{{with fieldAlias $.Union.DiscriminatorField $.Union.DiscriminatorJSON}} = Field(alias="{{.}}"){{end}}
 {{- range .Type.Fields}}
 {{- if ne .JSONName $.Union.DiscriminatorJSON}}
 {{- if .Description}}
 {{fieldComment .Description}}
 {{- end}}
-    {{snake .Name}}: {{pythonType .Type .Required}}{{pythonField .Type .Required}}
+    {{safeSnake .Name}}: {{pythonType .Type .Required}}{{pythonField .Type .Required (fieldAlias .Name .JSONName)}}
 {{- end}}
 {{- end}}
 
@@ -532,7 +570,7 @@ class {{.Name}}(BaseModel):
 {{- end}}
 {{.Name}} = Annotated[
     Union[{{range $i, $v := .Union.Variants}}{{if $i}}, {{end}}{{$v.Name}}{{end}}],
-    Field(discriminator="{{snake .Union.DiscriminatorField}}"),
+    Field(discriminator="{{safeSnake .Union.DiscriminatorField}}"),
 ]
 {{end}}
 {{- define "simpleunion"}}
