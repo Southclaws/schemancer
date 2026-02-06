@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs:*)",
+      "Bash(find:*)",
+      "Bash(go test:*)",
+      "Bash(go build:*)",
+      "Bash(go run:*)",
+      "Bash(for dir in tests/java/arrays tests/java/enums tests/java/nested_objects tests/java/simple_object tests/java/primitives tests/java/complex_unions)",
+      "Bash(do go run . \"$dir/schema.yaml\" java \"$dir/output/\" --package com.example.generated)",
+      "Bash(done)",
+      "Bash(for dir in tests/java/arrays tests/java/enums tests/java/nested_objects tests/java/simple_object tests/java/primitives tests/java/complex_unions tests/java/discriminated_union)",
+      "Bash(do for f in \"$dir\"/output/*.java)",
+      "Bash(for f in tests/multi/generated/java/*.java)",
+      "Bash(for f in tests/java/mcp/output/*.java)",
+      "WebFetch(domain:zod.dev)",
+      "Bash(go install:*)"
+    ]
+  }
+}

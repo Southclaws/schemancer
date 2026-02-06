@@ -1,0 +1,74 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: Recursive
+description: Test recursive/self-referencing types
+$defs:
+  TreeNode:
+    type: object
+    properties:
+      value:
+        type: string
+      children:
+        type: array
+        items:
+          $ref: "#/$defs/TreeNode"
+    required:
+      - value
+
+  LinkedListNode:
+    type: object
+    properties:
+      data:
+        type: integer
+      next:
+        $ref: "#/$defs/LinkedListNode"
+    required:
+      - data
+
+  BinaryTree:
+    type: object
+    properties:
+      value:
+        type: number
+      left:
+        $ref: "#/$defs/BinaryTree"
+      right:
+        $ref: "#/$defs/BinaryTree"
+    required:
+      - value
+
+  Graph:
+    type: object
+    properties:
+      id:
+        type: string
+      edges:
+        type: array
+        items:
+          type: object
+          properties:
+            target:
+              $ref: "#/$defs/Graph"
+            weight:
+              type: number
+          required:
+            - target
+
+  MutualA:
+    type: object
+    properties:
+      name:
+        type: string
+      b:
+        $ref: "#/$defs/MutualB"
+    required:
+      - name
+
+  MutualB:
+    type: object
+    properties:
+      name:
+        type: string
+      a:
+        $ref: "#/$defs/MutualA"
+    required:
+      - name

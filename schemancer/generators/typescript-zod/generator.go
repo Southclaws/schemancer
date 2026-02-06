@@ -66,6 +66,7 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 	}
 
 	formatMappings := g.getFormatMappings(opts)
+	recursiveFields := findRecursiveFields(data.Types)
 
 	funcs := template.FuncMap{
 		"pascal":    casing.ToPascalCase,
@@ -77,6 +78,12 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 		"hasPrefix": strings.HasPrefix,
 		"export":    func() string { return exportKeyword(cfg.exportTypes) },
 		"isIntEnum": isIntEnum,
+		"isRecursiveField": func(typeName, fieldName string) bool {
+			if fields, ok := recursiveFields[typeName]; ok {
+				return fields[fieldName]
+			}
+			return false
+		},
 	}
 
 	tmpl, err := template.New("typescript-zod").Funcs(funcs).Parse(zodTemplate)
@@ -118,6 +125,85 @@ func formatComment(description string) string {
 // isIntEnum returns true if the enum has an integer type
 func isIntEnum(t ir.IRType) bool {
 	return t.EnumType == ir.IRBuiltinInt
+}
+
+// collectNamedRefs extracts all named type references from an IRTypeRef.
+func collectNamedRefs(ref *ir.IRTypeRef, refs map[string]bool) {
+	if ref == nil {
+		return
+	}
+	if ref.Name != "" {
+		refs[ref.Name] = true
+	}
+	if ref.Array != nil {
+		collectNamedRefs(ref.Array, refs)
+	}
+	if ref.Map != nil {
+		collectNamedRefs(ref.Map, refs)
+	}
+}
+
+// canReach checks if 'from' can reach 'to' in the dependency graph using DFS.
+func canReach(deps map[string]map[string]bool, from, to string) bool {
+	visited := make(map[string]bool)
+	var dfs func(current string) bool
+	dfs = func(current string) bool {
+		if current == to {
+			return true
+		}
+		if visited[current] {
+			return false
+		}
+		visited[current] = true
+		for dep := range deps[current] {
+			if dfs(dep) {
+				return true
+			}
+		}
+		return false
+	}
+	return dfs(from)
+}
+
+// findRecursiveFields identifies fields in struct types that participate in
+// reference cycles. Returns a map of type name -> set of field JSON names
+// that need getter syntax for Zod v4 recursive schemas.
+func findRecursiveFields(types []ir.IRType) map[string]map[string]bool {
+	// Build dependency graph: type -> set of types it references
+	deps := make(map[string]map[string]bool)
+	for _, t := range types {
+		if t.Kind != ir.IRKindStruct {
+			continue
+		}
+		refs := make(map[string]bool)
+		for _, f := range t.Fields {
+			collectNamedRefs(&f.Type, refs)
+		}
+		deps[t.Name] = refs
+	}
+
+	// For each struct type, check which fields reference types that can
+	// reach back to this type (forming a cycle)
+	result := make(map[string]map[string]bool)
+	for _, t := range types {
+		if t.Kind != ir.IRKindStruct {
+			continue
+		}
+		for _, f := range t.Fields {
+			fieldRefs := make(map[string]bool)
+			collectNamedRefs(&f.Type, fieldRefs)
+			for ref := range fieldRefs {
+				if canReach(deps, ref, t.Name) {
+					if result[t.Name] == nil {
+						result[t.Name] = make(map[string]bool)
+					}
+					result[t.Name][f.JSONName] = true
+					break
+				}
+			}
+		}
+	}
+	return result
 }
 
 func makeZodTypeFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapping) func(*ir.IRTypeRef) string {
@@ -242,7 +328,11 @@ const zodTemplate = `import { z } from "zod";
 {{end -}}
 {{export}}const {{.Name}}Schema = z.object({
 {{- range $i, $f := .Fields}}
+{{- if isRecursiveField $.Name $f.JSONName}}
+  get {{$f.JSONName}}() { return {{zodType $f.Type}}{{if not $f.Required}}.optional(){{end}}; },
+{{- else}}
   {{$f.JSONName}}: {{zodType $f.Type}}{{if not $f.Required}}.optional(){{end}},
+{{- end}}
 {{- end}}
 });
 {{export}}type {{.Name}} = z.infer<typeof {{.Name}}Schema>;
