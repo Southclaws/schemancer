@@ -3,6 +3,9 @@ from __future__ import annotations
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, EmailStr
 
+
+
+
 class User(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -11,3 +14,4 @@ class User(BaseModel):
     email: EmailStr
     id: UUID
     name: str
+

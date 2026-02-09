@@ -17,6 +17,7 @@ type Variant struct {
 	Name       string
 	ConstValue string
 	Schema     *jsonschema.Schema
+	BaseType   string // Name of the base type from allOf $ref (if any)
 }
 
 func DiscriminatedUnion(schema *jsonschema.Schema) (*UnionResult, error) {
@@ -26,9 +27,10 @@ func DiscriminatedUnion(schema *jsonschema.Schema) (*UnionResult, error) {
 
 	// First pass: collect all merged variants and their const fields
 	type variantInfo struct {
-		name         string
-		schema       *jsonschema.Schema
-		constFields  map[string]string // field name -> const value
+		name        string
+		schema      *jsonschema.Schema
+		constFields map[string]string // field name -> const value
+		baseType    string            // base type name from allOf $ref
 	}
 
 	variantInfos := []variantInfo{}
@@ -37,6 +39,9 @@ func DiscriminatedUnion(schema *jsonschema.Schema) (*UnionResult, error) {
 		if resolved == nil {
 			continue
 		}
+
+		// Extract base type from allOf $ref before merging
+		baseType := FindAllOfBaseRef(resolved)
 
 		merged := merge.AllOf(schema, resolved)
 		if merged == nil || merged.Properties == nil {
@@ -61,6 +66,7 @@ func DiscriminatedUnion(schema *jsonschema.Schema) (*UnionResult, error) {
 			name:        variantName,
 			schema:      merged,
 			constFields: constFields,
+			baseType:    baseType,
 		})
 	}
 
@@ -111,6 +117,7 @@ func DiscriminatedUnion(schema *jsonschema.Schema) (*UnionResult, error) {
 			Name:       vi.name,
 			ConstValue: vi.constFields[discriminatorField],
 			Schema:     vi.schema,
+			BaseType:   vi.baseType,
 		})
 	}
 
@@ -118,6 +125,21 @@ func DiscriminatedUnion(schema *jsonschema.Schema) (*UnionResult, error) {
 		DiscriminatorField: discriminatorField,
 		Variants:           variants,
 	}, nil
+}
+
+// FindAllOfBaseRef extracts the base type name from allOf $ref composition.
+// Returns the type name (e.g., "BaseField") if exactly one $ref is found in allOf, else "".
+func FindAllOfBaseRef(schema *jsonschema.Schema) string {
+	if schema == nil || len(schema.AllOf) == 0 {
+		return ""
+	}
+	for _, part := range schema.AllOf {
+		if part.Ref != "" {
+			parts := strings.Split(part.Ref, "/")
+			return parts[len(parts)-1]
+		}
+	}
+	return ""
 }
 
 func ResolveVariantSchema(rootSchema *jsonschema.Schema, variant *jsonschema.Schema) *jsonschema.Schema {

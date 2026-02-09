@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+export const BaseEventSchema = z.object({
+  timestamp: z.iso.datetime(),
+  type: z.string(),
+});
+export type BaseEvent = z.infer<typeof BaseEventSchema>;
+
 export const CreatedEventSchema = z.object({
   type: z.literal("created"),
   id: z.string(),

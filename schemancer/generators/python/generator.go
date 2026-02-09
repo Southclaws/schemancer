@@ -88,11 +88,30 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 	}
 
 	formatMappings := g.getFormatMappings(opts)
+	inheritedFields := computeInheritedFields(data.Types)
 
 	funcs := template.FuncMap{
 		"snake":          casing.ToSnakeCase,
 		"safeSnake":      safeSnake,
 		"fieldAlias":     fieldAlias,
+		"isInheritedField": func(typeName, fieldJSONName string) bool {
+			if fields, ok := inheritedFields[typeName]; ok {
+				return fields[fieldJSONName]
+			}
+			return false
+		},
+		"hasNonInheritedFields": func(typeName string, fields []ir.IRField) bool {
+			inherited, ok := inheritedFields[typeName]
+			if !ok {
+				return len(fields) > 0
+			}
+			for _, f := range fields {
+				if !inherited[f.JSONName] {
+					return true
+				}
+			}
+			return false
+		},
 		"pascal":         casing.ToPascalCase,
 		"camel":          casing.ToCamelCase,
 		"lower":          strings.ToLower,
@@ -386,6 +405,50 @@ func makePythonDefaultFunc() func(bool) string {
 	}
 }
 
+// computeInheritedFields builds a map of type name -> set of field JSONNames
+// that are inherited from a base type (i.e., exist in both the type and its BaseType).
+func computeInheritedFields(types []ir.IRType) map[string]map[string]bool {
+	// Index all type fields by name (including union variant types)
+	typeFieldMap := make(map[string][]ir.IRField)
+	for _, t := range types {
+		typeFieldMap[t.Name] = t.Fields
+		if t.Union != nil {
+			for _, v := range t.Union.Variants {
+				typeFieldMap[v.Name] = v.Type.Fields
+			}
+		}
+	}
+
+	result := make(map[string]map[string]bool)
+	for _, t := range types {
+		if t.BaseType != "" {
+			markInherited(result, t.Name, t.BaseType, typeFieldMap)
+		}
+		if t.Union != nil {
+			for _, v := range t.Union.Variants {
+				if v.Type.BaseType != "" {
+					markInherited(result, v.Name, v.Type.BaseType, typeFieldMap)
+				}
+			}
+		}
+	}
+	return result
+}
+
+func markInherited(result map[string]map[string]bool, typeName, baseTypeName string, typeFieldMap map[string][]ir.IRField) {
+	baseFieldNames := make(map[string]bool)
+	for _, f := range typeFieldMap[baseTypeName] {
+		baseFieldNames[f.JSONName] = true
+	}
+	inherited := make(map[string]bool)
+	for _, f := range typeFieldMap[typeName] {
+		if baseFieldNames[f.JSONName] {
+			inherited[f.JSONName] = true
+		}
+	}
+	result[typeName] = inherited
+}
+
 // hasConstraints returns true if the type ref has any validation constraints
 func hasConstraints(ref *ir.IRTypeRef) bool {
 	return ref != nil && ref.Constraints != nil
@@ -477,44 +540,49 @@ func makePythonFieldFunc() func(*ir.IRTypeRef, bool, string) string {
 
 
 const pythonTemplate = `from __future__ import annotations
-{{range $i, $imp := .Imports}}
+
+{{range $i, $imp := .Imports -}}
 from {{$imp.Module}} import {{range $j, $n := $imp.Names}}{{if $j}}, {{end}}{{$n}}{{end}}
-{{- end}}
+{{end}}
 
-{{- range $i, $t := .Types}}
-{{- if eq .Kind "struct"}}
-{{- template "class" .}}
-{{- else if eq .Kind "alias"}}
-{{- template "alias" .}}
-{{- else if eq .Kind "enum"}}
-{{- template "enum" .}}
-{{- else if eq .Kind "discriminated_union"}}
-{{- template "union" .}}
-{{- else if eq .Kind "union"}}
-{{- template "simpleunion" .}}
-{{- end}}
-{{- end}}
+
+{{range $i, $t := .Types -}}
+{{if $i}}
+
+{{end -}}
+{{if eq .Kind "struct" -}}
+{{template "class" .}}
+{{- else if eq .Kind "alias" -}}
+{{template "alias" .}}
+{{- else if eq .Kind "enum" -}}
+{{template "enum" .}}
+{{- else if eq .Kind "discriminated_union" -}}
+{{template "union" .}}
+{{- else if eq .Kind "union" -}}
+{{template "simpleunion" .}}
+{{- end -}}
+{{end}}
 {{- define "class"}}
-
 class {{.Name}}(BaseModel):
     model_config = ConfigDict(extra="forbid")
-{{- if not .Fields}}
-
-    pass
-{{- else}}
-{{range .Fields}}
+{{if hasNonInheritedFields .Name .Fields}}
+{{- range .Fields}}
+{{- if not (isInheritedField $.Name .JSONName)}}
 {{- if .Description}}
 {{fieldComment .Description}}
 {{- end}}
     {{safeSnake .Name}}: {{pythonType .Type .Required}}{{pythonField .Type .Required (fieldAlias .Name .JSONName)}}
 {{- end}}
 {{- end}}
+{{- else}}
+    pass
+{{- end}}
 {{- end}}
 
 {{- define "alias"}}
 {{- if .Description}}
 {{comment .Description}}
-{{- end}}
+{{end -}}
 {{- if .Element}}
 {{- if or .Element.Builtin .Element.Format .Element.Array}}
 class {{.Name}}(RootModel[{{pythonType .Element true}}]):
@@ -525,12 +593,12 @@ class {{.Name}}(RootModel[{{pythonType .Element true}}]):
 {{- else}}
 {{.Name}} = Any
 {{- end}}
-{{end}}
+{{- end}}
 
 {{- define "enum"}}
 {{- if .Description}}
 {{comment .Description}}
-{{- end}}
+{{end -}}
 {{- if isIntEnum .}}
 class {{.Name}}(int, Enum):
 {{- range .EnumValues}}
@@ -544,39 +612,46 @@ class {{.Name}}(str, Enum):
     {{upper .}} = {{literalValue .}}
 {{- end}}
 {{- end}}
-{{end}}
+{{- end}}
 
 {{- define "union"}}
-{{- range .Union.Variants}}
-{{- if .Type.Description}}
-{{comment .Type.Description}}
-{{- end}}
-class {{.Name}}(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+{{- range $i, $v := .Union.Variants}}{{if $i}}
 
-    {{safeSnake $.Union.DiscriminatorField}}: Literal[{{literalValue .ConstValue}}]{{with fieldAlias $.Union.DiscriminatorField $.Union.DiscriminatorJSON}} = Field(alias="{{.}}"){{end}}
-{{- range .Type.Fields}}
+{{end -}}
+{{$variantName := $v.Name}}
+{{- if $v.Type.Description}}
+{{comment $v.Type.Description}}
+{{end -}}
+{{- if $v.Type.BaseType}}
+class {{$v.Name}}({{$v.Type.BaseType}}):
+{{- else}}
+class {{$v.Name}}(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+{{- end}}
+    {{safeSnake $.Union.DiscriminatorField}}: Literal[{{literalValue $v.ConstValue}}]{{with fieldAlias $.Union.DiscriminatorField $.Union.DiscriminatorJSON}} = Field(alias="{{.}}"){{end}}
+{{- range $v.Type.Fields}}
 {{- if ne .JSONName $.Union.DiscriminatorJSON}}
+{{- if not (isInheritedField $variantName .JSONName)}}
 {{- if .Description}}
 {{fieldComment .Description}}
 {{- end}}
     {{safeSnake .Name}}: {{pythonType .Type .Required}}{{pythonField .Type .Required (fieldAlias .Name .JSONName)}}
 {{- end}}
 {{- end}}
-
-{{end}}
-{{- if .Description}}
-{{comment .Description}}
 {{- end}}
+{{- end}}
+{{if .Description}}
+{{comment .Description}}
+{{end}}
 {{.Name}} = Annotated[
     Union[{{range $i, $v := .Union.Variants}}{{if $i}}, {{end}}{{$v.Name}}{{end}}],
     Field(discriminator="{{safeSnake .Union.DiscriminatorField}}"),
 ]
 {{end}}
-{{- define "simpleunion"}}
-{{- if .Description}}
+{{define "simpleunion"}}
+{{if .Description}}
 {{comment .Description}}
-{{- end}}
+{{end}}
 {{.Name}} = Union[{{range $i, $v := .SimpleUnion.Variants}}{{if $i}}, {{end}}{{pythonType $v true}}{{end}}]
 {{end}}
 `

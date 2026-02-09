@@ -4,12 +4,17 @@ from uuid import UUID
 from enum import Enum
 from pydantic import BaseModel, ConfigDict
 
+
+
+
 class Address(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     city: str
     country: str | None = None
     street: str
+
+
 class Status(str, Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
@@ -24,3 +29,4 @@ class Person(BaseModel):
     id: UUID
     name: str
     status: Status
+

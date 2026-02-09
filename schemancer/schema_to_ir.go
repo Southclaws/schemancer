@@ -62,9 +62,12 @@ func SchemaToIR(schema *jsonschema.Schema) (*ir.IR, error) {
 				irUnion := convertDiscriminatedUnion(schema, union, name, &result.Types)
 				result.Types = append(result.Types, irUnion)
 
-				// Mark all variant names as used in unions
+				// Mark all variant names and base types as used in unions
 				for _, v := range union.Variants {
 					usedInUnions[v.Name] = true
+					if v.BaseType != "" {
+						usedInUnions[v.BaseType] = true
+					}
 				}
 				continue
 			}
@@ -99,9 +102,12 @@ func SchemaToIR(schema *jsonschema.Schema) (*ir.IR, error) {
 				irUnion := convertDiscriminatedUnion(schema, union, name, &result.Types)
 				result.Types = append(result.Types, irUnion)
 
-				// Mark all variant names as used in unions
+				// Mark all variant names and base types as used in unions
 				for _, v := range union.Variants {
 					usedInUnions[v.Name] = true
+					if v.BaseType != "" {
+						usedInUnions[v.BaseType] = true
+					}
 				}
 			}
 		}
@@ -159,6 +165,26 @@ func convertDiscriminatedUnion(root *jsonschema.Schema, union *detect.UnionResul
 		}
 	}
 
+	// Track base types that need to be generated
+	baseTypesNeeded := make(map[string]bool)
+	for _, v := range union.Variants {
+		if v.BaseType != "" {
+			baseTypesNeeded[v.BaseType] = true
+		}
+	}
+
+	// Generate base types from $defs if they exist
+	for baseTypeName := range baseTypesNeeded {
+		if root.Defs != nil {
+			if baseSchema, ok := root.Defs[baseTypeName]; ok {
+				baseIRType := convertSchemaToIRType(root, baseTypeName, baseSchema, inlineTypes)
+				if baseIRType != nil {
+					*inlineTypes = append(*inlineTypes, *baseIRType)
+				}
+			}
+		}
+	}
+
 	variants := make([]ir.IRVariant, 0, len(union.Variants))
 	for _, v := range union.Variants {
 		// Generate a name for inline variants using union name + const value
@@ -169,6 +195,9 @@ func convertDiscriminatedUnion(root *jsonschema.Schema, union *detect.UnionResul
 		}
 
 		variantType := convertStructToIRType(root, variantName, v.Schema, inlineTypes)
+		if v.BaseType != "" {
+			variantType.BaseType = symbolName(v.BaseType)
+		}
 		variants = append(variants, ir.IRVariant{
 			Name:       symbolName(variantName),
 			ConstValue: v.ConstValue,
@@ -195,9 +224,14 @@ func convertSchemaToIRType(root *jsonschema.Schema, name string, schema *jsonsch
 
 	// Handle allOf composition - merge all schemas into one struct
 	if len(schema.AllOf) > 0 {
+		baseTypeName := detect.FindAllOfBaseRef(schema)
 		merged := merge.AllOf(root, schema)
 		if merged != nil && merged.Properties != nil {
-			return convertStructToIRType(root, name, merged, inlineTypes)
+			irType := convertStructToIRType(root, name, merged, inlineTypes)
+			if baseTypeName != "" {
+				irType.BaseType = symbolName(baseTypeName)
+			}
+			return irType
 		}
 		// If merge fails, fall through to other handling
 	}

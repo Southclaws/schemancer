@@ -3,35 +3,37 @@ from __future__ import annotations
 from typing import Annotated, Any, Dict, Literal, Union
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
-class CreatedEvent(BaseModel):
+
+
+
+
+class BaseEvent(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    timestamp: datetime
+    type: str
+
+
+class CreatedEvent(BaseEvent):
     type: Literal["created"]
     id: str
     name: str
-    timestamp: datetime
 
 
-class UpdatedEvent(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
+class UpdatedEvent(BaseEvent):
     type: Literal["updated"]
     changes: Dict[str, Any]
     id: str
-    timestamp: datetime
 
 
-class DeletedEvent(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
+class DeletedEvent(BaseEvent):
     type: Literal["deleted"]
     id: str
     reason: str | None = None
-    timestamp: datetime
-
 
 Event = Annotated[
     Union[CreatedEvent, UpdatedEvent, DeletedEvent],
     Field(discriminator="type"),
 ]
+
 

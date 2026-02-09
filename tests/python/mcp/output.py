@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import Any, Dict, List
 from enum import Enum
 from pydantic import AnyUrl, BaseModel, ConfigDict, Field, RootModel
+
+
+
+
 """The sender or recipient of messages and data in a conversation."""
+
 class Role(str, Enum):
     ASSISTANT = "assistant"
     USER = "user"
@@ -36,6 +41,7 @@ class Annotations(BaseModel):
     """
     priority: float | None = Field(ge=0, le=1, default=None)
 
+
 class AudioContent(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -48,6 +54,7 @@ class AudioContent(BaseModel):
     """The MIME type of the audio. Different providers may support different audio types."""
     mime_type: str
     type: str
+
 
 class BaseMetadata(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -64,6 +71,7 @@ class BaseMetadata(BaseModel):
     """
     title: str | None = None
 
+
 class BlobResourceContents(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -76,6 +84,7 @@ class BlobResourceContents(BaseModel):
     """The URI of this resource."""
     uri: AnyUrl
 
+
 class BooleanSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -83,7 +92,10 @@ class BooleanSchema(BaseModel):
     description: str | None = None
     title: str | None = None
     type: str
+
+
 """A progress token, used to associate progress notifications with the original request."""
+
 class ProgressToken(RootModel[Any]):
     pass
 
@@ -94,11 +106,13 @@ class CallToolRequestParamsMeta(BaseModel):
     """If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications."""
     progress_token: ProgressToken | None = None
 
+
 class TaskMetadata(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """Requested duration in milliseconds to retain task from creation."""
     ttl: int | None = None
+
 
 class CallToolRequestParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -118,7 +132,10 @@ class CallToolRequestParams(BaseModel):
     for task augmentation of specific request types in their capabilities.
     """
     task: TaskMetadata | None = None
+
+
 """A uniquely identifying ID for a request in JSON-RPC."""
+
 class RequestId(RootModel[Any]):
     pass
 
@@ -131,6 +148,7 @@ class CallToolRequest(BaseModel):
     method: str
     params: CallToolRequestParams
 
+
 class EmbeddedResource(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -140,6 +158,7 @@ class EmbeddedResource(BaseModel):
     annotations: Annotations | None = None
     resource: Any
     type: str
+
 
 class ImageContent(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -153,6 +172,7 @@ class ImageContent(BaseModel):
     """The MIME type of the image. Different providers may support different image types."""
     mime_type: str
     type: str
+
 
 class Icon(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -188,6 +208,7 @@ class Icon(BaseModel):
     If not provided, the client should assume the icon can be used with any theme.
     """
     theme: str | None = None
+
 
 class ResourceLink(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -237,6 +258,7 @@ class ResourceLink(BaseModel):
     """The URI of this resource."""
     uri: AnyUrl
 
+
 class TextContent(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -247,7 +269,11 @@ class TextContent(BaseModel):
     """The text content of the message."""
     text: str
     type: str
+
+
+
 ContentBlock = Union[TextContent, ImageContent, AudioContent, ResourceLink, EmbeddedResource]
+
 
 
 class CallToolResult(BaseModel):
@@ -275,11 +301,13 @@ class CallToolResult(BaseModel):
     """An optional JSON object that represents the structured result of the tool call."""
     structured_content: Dict[str, Any] | None = None
 
+
 class CancelTaskRequestParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """The task identifier to cancel."""
     task_id: str
+
 
 class CancelTaskRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -288,7 +316,10 @@ class CancelTaskRequest(BaseModel):
     jsonrpc: str
     method: str
     params: CancelTaskRequestParams
+
+
 """The status of a task."""
+
 class TaskStatus(str, Enum):
     CANCELLED = "cancelled"
     COMPLETED = "completed"
@@ -300,8 +331,6 @@ class TaskStatus(str, Enum):
 class CancelTaskResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    """See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage."""
-    meta: Dict[str, Any] | None = None
     """ISO 8601 timestamp when the task was created."""
     created_at: str
     """ISO 8601 timestamp when the task was last updated."""
@@ -322,6 +351,7 @@ class CancelTaskResult(BaseModel):
     task_id: str
     """Actual retention duration from creation in milliseconds, null for unlimited."""
     ttl: int
+
 
 class CancelledNotificationParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -339,6 +369,7 @@ class CancelledNotificationParams(BaseModel):
     """
     request_id: RequestId | None = None
 
+
 class CancelledNotification(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -346,15 +377,18 @@ class CancelledNotification(BaseModel):
     method: str
     params: CancelledNotificationParams
 
+
 class ClientCapabilitiesElicitationForm(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     pass
 
+
 class ClientCapabilitiesElicitationURL(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     pass
+
 
 class ClientCapabilitiesElicitation(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -362,21 +396,25 @@ class ClientCapabilitiesElicitation(BaseModel):
     form: ClientCapabilitiesElicitationForm | None = None
     url: ClientCapabilitiesElicitationURL | None = None
 
+
 class ClientCapabilitiesRoots(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """Whether the client supports notifications for changes to the roots list."""
     list_changed: bool | None = None
 
+
 class ClientCapabilitiesSamplingContext(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     pass
 
+
 class ClientCapabilitiesSamplingTools(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     pass
+
 
 class ClientCapabilitiesSampling(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -389,20 +427,24 @@ class ClientCapabilitiesSampling(BaseModel):
     """Whether the client supports tool use via tools and toolChoice parameters."""
     tools: ClientCapabilitiesSamplingTools | None = None
 
+
 class ClientCapabilitiesTasksCancel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     pass
+
 
 class ClientCapabilitiesTasksList(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     pass
 
+
 class ClientCapabilitiesTasksRequestsElicitationCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     pass
+
 
 class ClientCapabilitiesTasksRequestsElicitation(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -410,16 +452,19 @@ class ClientCapabilitiesTasksRequestsElicitation(BaseModel):
     """Whether the client supports task-augmented elicitation/create requests."""
     create: ClientCapabilitiesTasksRequestsElicitationCreate | None = None
 
+
 class ClientCapabilitiesTasksRequestsSamplingCreateMessage(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     pass
+
 
 class ClientCapabilitiesTasksRequestsSampling(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """Whether the client supports task-augmented sampling/createMessage requests."""
     create_message: ClientCapabilitiesTasksRequestsSamplingCreateMessage | None = None
+
 
 class ClientCapabilitiesTasksRequests(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -428,6 +473,7 @@ class ClientCapabilitiesTasksRequests(BaseModel):
     elicitation: ClientCapabilitiesTasksRequestsElicitation | None = None
     """Task support for sampling-related requests."""
     sampling: ClientCapabilitiesTasksRequestsSampling | None = None
+
 
 class ClientCapabilitiesTasks(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -438,6 +484,7 @@ class ClientCapabilitiesTasks(BaseModel):
     list: ClientCapabilitiesTasksList | None = None
     """Specifies which request types can be augmented with tasks."""
     requests: ClientCapabilitiesTasksRequests | None = None
+
 
 class ClientCapabilities(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -453,11 +500,13 @@ class ClientCapabilities(BaseModel):
     """Present if the client supports task-augmented requests."""
     tasks: ClientCapabilitiesTasks | None = None
 
+
 class NotificationParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage."""
     meta: Dict[str, Any] | None = None
+
 
 class InitializedNotification(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -465,6 +514,7 @@ class InitializedNotification(BaseModel):
     jsonrpc: str
     method: str
     params: NotificationParams | None = None
+
 
 class ProgressNotificationParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -480,12 +530,14 @@ class ProgressNotificationParams(BaseModel):
     """Total number of items to process (or total progress required), if known."""
     total: float | None = None
 
+
 class ProgressNotification(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     jsonrpc: str
     method: str
     params: ProgressNotificationParams
+
 
 class RootsListChangedNotification(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -494,11 +546,10 @@ class RootsListChangedNotification(BaseModel):
     method: str
     params: NotificationParams | None = None
 
+
 class TaskStatusNotificationParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    """See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage."""
-    meta: Dict[str, Any] | None = None
     """ISO 8601 timestamp when the task was created."""
     created_at: str
     """ISO 8601 timestamp when the task was last updated."""
@@ -520,13 +571,18 @@ class TaskStatusNotificationParams(BaseModel):
     """Actual retention duration from creation in milliseconds, null for unlimited."""
     ttl: int
 
+
 class TaskStatusNotification(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     jsonrpc: str
     method: str
     params: TaskStatusNotificationParams
+
+
+
 ClientNotification = Union[CancelledNotification, InitializedNotification, ProgressNotification, TaskStatusNotification, RootsListChangedNotification]
+
 
 
 class CompleteRequestParamsArgument(BaseModel):
@@ -537,17 +593,20 @@ class CompleteRequestParamsArgument(BaseModel):
     """The value of the argument to use for completion matching."""
     value: str
 
+
 class CompleteRequestParamsContext(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """Previously-resolved variables in a URI template or prompt."""
     arguments: Dict[str, Any] | None = None
 
+
 class CompleteRequestParamsMeta(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications."""
     progress_token: ProgressToken | None = None
+
 
 class CompleteRequestParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -560,6 +619,7 @@ class CompleteRequestParams(BaseModel):
     context: CompleteRequestParamsContext | None = None
     ref: Any
 
+
 class CompleteRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -568,11 +628,13 @@ class CompleteRequest(BaseModel):
     method: str
     params: CompleteRequestParams
 
+
 class GetPromptRequestParamsMeta(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications."""
     progress_token: ProgressToken | None = None
+
 
 class GetPromptRequestParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -584,6 +646,7 @@ class GetPromptRequestParams(BaseModel):
     """The name of the prompt or prompt template."""
     name: str
 
+
 class GetPromptRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -592,11 +655,13 @@ class GetPromptRequest(BaseModel):
     method: str
     params: GetPromptRequestParams
 
+
 class GetTaskPayloadRequestParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """The task identifier to retrieve results for."""
     task_id: str
+
 
 class GetTaskPayloadRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -606,11 +671,13 @@ class GetTaskPayloadRequest(BaseModel):
     method: str
     params: GetTaskPayloadRequestParams
 
+
 class GetTaskRequestParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """The task identifier to query."""
     task_id: str
+
 
 class GetTaskRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -619,6 +686,7 @@ class GetTaskRequest(BaseModel):
     jsonrpc: str
     method: str
     params: GetTaskRequestParams
+
 
 class Implementation(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -658,11 +726,13 @@ class Implementation(BaseModel):
     """An optional URL of the website for this implementation."""
     website_url: AnyUrl | None = None
 
+
 class InitializeRequestParamsMeta(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications."""
     progress_token: ProgressToken | None = None
+
 
 class InitializeRequestParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -674,6 +744,7 @@ class InitializeRequestParams(BaseModel):
     """The latest version of the Model Context Protocol that the client supports. The client MAY decide to support older versions as well."""
     protocol_version: str
 
+
 class InitializeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -682,11 +753,13 @@ class InitializeRequest(BaseModel):
     method: str
     params: InitializeRequestParams
 
+
 class PaginatedRequestParamsMeta(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications."""
     progress_token: ProgressToken | None = None
+
 
 class PaginatedRequestParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -699,6 +772,7 @@ class PaginatedRequestParams(BaseModel):
     """
     cursor: str | None = None
 
+
 class ListPromptsRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -706,6 +780,7 @@ class ListPromptsRequest(BaseModel):
     jsonrpc: str
     method: str
     params: PaginatedRequestParams | None = None
+
 
 class ListResourceTemplatesRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -715,6 +790,7 @@ class ListResourceTemplatesRequest(BaseModel):
     method: str
     params: PaginatedRequestParams | None = None
 
+
 class ListResourcesRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -722,6 +798,7 @@ class ListResourcesRequest(BaseModel):
     jsonrpc: str
     method: str
     params: PaginatedRequestParams | None = None
+
 
 class ListTasksRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -731,6 +808,7 @@ class ListTasksRequest(BaseModel):
     method: str
     params: PaginatedRequestParams | None = None
 
+
 class ListToolsRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -739,17 +817,20 @@ class ListToolsRequest(BaseModel):
     method: str
     params: PaginatedRequestParams | None = None
 
+
 class RequestParamsMeta(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications."""
     progress_token: ProgressToken | None = None
 
+
 class RequestParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage."""
     meta: RequestParamsMeta | None = None
+
 
 class PingRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -759,11 +840,13 @@ class PingRequest(BaseModel):
     method: str
     params: RequestParams | None = None
 
+
 class ReadResourceRequestParamsMeta(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications."""
     progress_token: ProgressToken | None = None
+
 
 class ReadResourceRequestParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -773,6 +856,7 @@ class ReadResourceRequestParams(BaseModel):
     """The URI of the resource. The URI can use any protocol; it is up to the server how to interpret it."""
     uri: AnyUrl
 
+
 class ReadResourceRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -780,12 +864,15 @@ class ReadResourceRequest(BaseModel):
     jsonrpc: str
     method: str
     params: ReadResourceRequestParams
+
+
 """
 The severity of a log message.
 
 These map to syslog message severities, as specified in RFC-5424:
 https://datatracker.ietf.org/doc/html/rfc5424#section-6.2.1
 """
+
 class LoggingLevel(str, Enum):
     ALERT = "alert"
     CRITICAL = "critical"
@@ -803,6 +890,7 @@ class SetLevelRequestParamsMeta(BaseModel):
     """If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications."""
     progress_token: ProgressToken | None = None
 
+
 class SetLevelRequestParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -810,6 +898,7 @@ class SetLevelRequestParams(BaseModel):
     meta: SetLevelRequestParamsMeta | None = None
     """The level of logging that the client wants to receive from the server. The server should send all logs at this level and higher (i.e., more severe) to the client as notifications/message."""
     level: LoggingLevel
+
 
 class SetLevelRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -819,11 +908,13 @@ class SetLevelRequest(BaseModel):
     method: str
     params: SetLevelRequestParams
 
+
 class SubscribeRequestParamsMeta(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications."""
     progress_token: ProgressToken | None = None
+
 
 class SubscribeRequestParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -833,6 +924,7 @@ class SubscribeRequestParams(BaseModel):
     """The URI of the resource. The URI can use any protocol; it is up to the server how to interpret it."""
     uri: AnyUrl
 
+
 class SubscribeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -841,11 +933,13 @@ class SubscribeRequest(BaseModel):
     method: str
     params: SubscribeRequestParams
 
+
 class UnsubscribeRequestParamsMeta(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications."""
     progress_token: ProgressToken | None = None
+
 
 class UnsubscribeRequestParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -855,6 +949,7 @@ class UnsubscribeRequestParams(BaseModel):
     """The URI of the resource. The URI can use any protocol; it is up to the server how to interpret it."""
     uri: AnyUrl
 
+
 class UnsubscribeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -862,7 +957,11 @@ class UnsubscribeRequest(BaseModel):
     jsonrpc: str
     method: str
     params: UnsubscribeRequestParams
+
+
+
 ClientRequest = Union[InitializeRequest, PingRequest, ListResourcesRequest, ListResourceTemplatesRequest, ReadResourceRequest, SubscribeRequest, UnsubscribeRequest, ListPromptsRequest, GetPromptRequest, ListToolsRequest, CallToolRequest, GetTaskRequest, GetTaskPayloadRequest, CancelTaskRequest, ListTasksRequest, SetLevelRequest, CompleteRequest]
+
 
 
 class CreateMessageResult(BaseModel):
@@ -887,6 +986,7 @@ class CreateMessageResult(BaseModel):
     """
     stop_reason: str | None = None
 
+
 class ElicitResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -906,17 +1006,17 @@ class ElicitResult(BaseModel):
     """
     content: Dict[str, Any] | None = None
 
+
 class GetTaskPayloadResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage."""
     meta: Dict[str, Any] | None = None
 
+
 class GetTaskResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    """See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage."""
-    meta: Dict[str, Any] | None = None
     """ISO 8601 timestamp when the task was created."""
     created_at: str
     """ISO 8601 timestamp when the task was last updated."""
@@ -938,6 +1038,7 @@ class GetTaskResult(BaseModel):
     """Actual retention duration from creation in milliseconds, null for unlimited."""
     ttl: int
 
+
 class Root(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -956,12 +1057,14 @@ class Root(BaseModel):
     """
     uri: AnyUrl
 
+
 class ListRootsResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage."""
     meta: Dict[str, Any] | None = None
     roots: List[Root]
+
 
 class Task(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -987,6 +1090,7 @@ class Task(BaseModel):
     """Actual retention duration from creation in milliseconds, null for unlimited."""
     ttl: int
 
+
 class ListTasksResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -999,12 +1103,17 @@ class ListTasksResult(BaseModel):
     next_cursor: str | None = None
     tasks: List[Task]
 
+
 class Result(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage."""
     meta: Dict[str, Any] | None = None
+
+
+
 ClientResult = Union[Result, GetTaskResult, GetTaskPayloadResult, CancelTaskResult, ListTasksResult, CreateMessageResult, ListRootsResult, ElicitResult]
+
 
 
 class CompleteResultCompletion(BaseModel):
@@ -1017,6 +1126,7 @@ class CompleteResultCompletion(BaseModel):
     """An array of completion values. Must not exceed 100 items."""
     values: List[str]
 
+
 class CompleteResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1024,16 +1134,19 @@ class CompleteResult(BaseModel):
     meta: Dict[str, Any] | None = None
     completion: CompleteResultCompletion
 
+
 class CreateMessageRequestParamsMeta(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications."""
     progress_token: ProgressToken | None = None
 
+
 class CreateMessageRequestParamsMetadata(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     pass
+
 
 class ModelHint(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1050,6 +1163,7 @@ class ModelHint(BaseModel):
      - `gemini-1.5-flash` could match `claude-3-haiku-20240307`
     """
     name: str | None = None
+
 
 class ModelPreferences(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1083,6 +1197,7 @@ class ModelPreferences(BaseModel):
     """
     speed_priority: float | None = Field(ge=0, le=1, default=None)
 
+
 class SamplingMessage(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1090,6 +1205,7 @@ class SamplingMessage(BaseModel):
     meta: Dict[str, Any] | None = None
     content: Any
     role: Role
+
 
 class ToolAnnotations(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1130,6 +1246,7 @@ class ToolAnnotations(BaseModel):
     """A human-readable title for the tool."""
     title: str | None = None
 
+
 class ToolExecution(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1146,6 +1263,7 @@ class ToolExecution(BaseModel):
     """
     task_support: str | None = None
 
+
 class ToolInputSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1154,6 +1272,7 @@ class ToolInputSchema(BaseModel):
     required: List[str] | None = None
     type: str
 
+
 class ToolOutputSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1161,6 +1280,7 @@ class ToolOutputSchema(BaseModel):
     properties: Dict[str, Any] | None = None
     required: List[str] | None = None
     type: str
+
 
 class Tool(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1215,6 +1335,7 @@ class Tool(BaseModel):
     """
     title: str | None = None
 
+
 class ToolChoice(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1225,6 +1346,7 @@ class ToolChoice(BaseModel):
     - "none": Model MUST NOT use any tools
     """
     mode: str | None = None
+
 
 class CreateMessageRequestParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1275,6 +1397,7 @@ class CreateMessageRequestParams(BaseModel):
     """
     tools: List[Tool] | None = None
 
+
 class CreateMessageRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1283,13 +1406,17 @@ class CreateMessageRequest(BaseModel):
     method: str
     params: CreateMessageRequestParams
 
+
 class CreateTaskResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage."""
     meta: Dict[str, Any] | None = None
     task: Task
+
+
 """An opaque token used to represent a cursor for pagination."""
+
 class Cursor(RootModel[str]):
     pass
 
@@ -1300,6 +1427,7 @@ class ElicitRequestFormParamsMeta(BaseModel):
     """If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications."""
     progress_token: ProgressToken | None = None
 
+
 class ElicitRequestFormParamsRequestedSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1307,6 +1435,7 @@ class ElicitRequestFormParamsRequestedSchema(BaseModel):
     properties: Dict[str, Any]
     required: List[str] | None = None
     type: str
+
 
 class ElicitRequestFormParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1332,11 +1461,13 @@ class ElicitRequestFormParams(BaseModel):
     """
     task: TaskMetadata | None = None
 
+
 class ElicitRequestURLParamsMeta(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications."""
     progress_token: ProgressToken | None = None
+
 
 class ElicitRequestURLParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1363,8 +1494,13 @@ class ElicitRequestURLParams(BaseModel):
     task: TaskMetadata | None = None
     """The URL that the user should navigate to."""
     url: AnyUrl
+
+
+
 """The parameters for a request to elicit additional information from the user via the client."""
+
 ElicitRequestParams = Union[ElicitRequestURLParams, ElicitRequestFormParams]
+
 
 
 class ElicitRequest(BaseModel):
@@ -1375,11 +1511,13 @@ class ElicitRequest(BaseModel):
     method: str
     params: ElicitRequestParams
 
+
 class ElicitationCompleteNotificationParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """The ID of the elicitation that completed."""
     elicitation_id: str
+
 
 class ElicitationCompleteNotification(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1387,6 +1525,8 @@ class ElicitationCompleteNotification(BaseModel):
     jsonrpc: str
     method: str
     params: ElicitationCompleteNotificationParams
+
+
 class EmptyResult(RootModel[Any]):
     pass
 
@@ -1405,6 +1545,7 @@ class LegacyTitledEnumSchema(BaseModel):
     title: str | None = None
     type: str
 
+
 class TitledMultiSelectEnumSchemaItemsAnyOfItem(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1413,11 +1554,13 @@ class TitledMultiSelectEnumSchemaItemsAnyOfItem(BaseModel):
     """Display title for this option."""
     title: str
 
+
 class TitledMultiSelectEnumSchemaItems(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """Array of enum options with values and display labels."""
     any_of: List[TitledMultiSelectEnumSchemaItemsAnyOfItem]
+
 
 class TitledMultiSelectEnumSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1436,6 +1579,7 @@ class TitledMultiSelectEnumSchema(BaseModel):
     title: str | None = None
     type: str
 
+
 class TitledSingleSelectEnumSchemaOneOfItem(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1443,6 +1587,7 @@ class TitledSingleSelectEnumSchemaOneOfItem(BaseModel):
     const: str
     """Display label for this option."""
     title: str
+
 
 class TitledSingleSelectEnumSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1457,12 +1602,14 @@ class TitledSingleSelectEnumSchema(BaseModel):
     title: str | None = None
     type: str
 
+
 class UntitledMultiSelectEnumSchemaItems(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """Array of enum values to choose from."""
     enum: List[str]
     type: str
+
 
 class UntitledMultiSelectEnumSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1481,6 +1628,7 @@ class UntitledMultiSelectEnumSchema(BaseModel):
     title: str | None = None
     type: str
 
+
 class UntitledSingleSelectEnumSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1493,7 +1641,11 @@ class UntitledSingleSelectEnumSchema(BaseModel):
     """Optional title for the enum field."""
     title: str | None = None
     type: str
+
+
+
 EnumSchema = Union[UntitledSingleSelectEnumSchema, TitledSingleSelectEnumSchema, UntitledMultiSelectEnumSchema, TitledMultiSelectEnumSchema, LegacyTitledEnumSchema]
+
 
 
 class Error(BaseModel):
@@ -1506,11 +1658,13 @@ class Error(BaseModel):
     """A short description of the error. The message SHOULD be limited to a concise single sentence."""
     message: str
 
+
 class PromptMessage(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     content: ContentBlock
     role: Role
+
 
 class GetPromptResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1520,6 +1674,7 @@ class GetPromptResult(BaseModel):
     """An optional description for the prompt."""
     description: str | None = None
     messages: List[PromptMessage]
+
 
 class Icons(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1537,21 +1692,25 @@ class Icons(BaseModel):
     """
     icons: List[Icon] | None = None
 
+
 class ServerCapabilitiesCompletions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     pass
+
 
 class ServerCapabilitiesLogging(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     pass
 
+
 class ServerCapabilitiesPrompts(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """Whether this server supports notifications for changes to the prompt list."""
     list_changed: bool | None = None
+
 
 class ServerCapabilitiesResources(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1561,20 +1720,24 @@ class ServerCapabilitiesResources(BaseModel):
     """Whether this server supports subscribing to resource updates."""
     subscribe: bool | None = None
 
+
 class ServerCapabilitiesTasksCancel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     pass
+
 
 class ServerCapabilitiesTasksList(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     pass
 
+
 class ServerCapabilitiesTasksRequestsToolsCall(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     pass
+
 
 class ServerCapabilitiesTasksRequestsTools(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1582,11 +1745,13 @@ class ServerCapabilitiesTasksRequestsTools(BaseModel):
     """Whether the server supports task-augmented tools/call requests."""
     call: ServerCapabilitiesTasksRequestsToolsCall | None = None
 
+
 class ServerCapabilitiesTasksRequests(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """Task support for tool-related requests."""
     tools: ServerCapabilitiesTasksRequestsTools | None = None
+
 
 class ServerCapabilitiesTasks(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1598,11 +1763,13 @@ class ServerCapabilitiesTasks(BaseModel):
     """Specifies which request types can be augmented with tasks."""
     requests: ServerCapabilitiesTasksRequests | None = None
 
+
 class ServerCapabilitiesTools(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """Whether this server supports notifications for changes to the tool list."""
     list_changed: bool | None = None
+
 
 class ServerCapabilities(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1622,6 +1789,7 @@ class ServerCapabilities(BaseModel):
     """Present if the server offers any tools to call."""
     tools: ServerCapabilitiesTools | None = None
 
+
 class InitializeResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1638,6 +1806,7 @@ class InitializeResult(BaseModel):
     protocol_version: str
     server_info: Implementation
 
+
 class JSONRPCErrorResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1645,12 +1814,14 @@ class JSONRPCErrorResponse(BaseModel):
     id: RequestId | None = None
     jsonrpc: str
 
+
 class JSONRPCNotification(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     jsonrpc: str
     method: str
     params: Dict[str, Any] | None = None
+
 
 class JSONRPCRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1660,17 +1831,27 @@ class JSONRPCRequest(BaseModel):
     method: str
     params: Dict[str, Any] | None = None
 
+
 class JSONRPCResultResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: RequestId
     jsonrpc: str
     result: Result
+
+
+
 """Refers to any valid JSON-RPC object that can be decoded off the wire, or encoded to be sent."""
+
 JSONRPCMessage = Union[JSONRPCRequest, JSONRPCNotification, JSONRPCResultResponse, JSONRPCErrorResponse]
 
+
+
+
 """A response to a request, containing either the result or error."""
+
 JSONRPCResponse = Union[JSONRPCResultResponse, JSONRPCErrorResponse]
+
 
 
 class PromptArgument(BaseModel):
@@ -1691,6 +1872,7 @@ class PromptArgument(BaseModel):
     if present).
     """
     title: str | None = None
+
 
 class Prompt(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1725,6 +1907,7 @@ class Prompt(BaseModel):
     """
     title: str | None = None
 
+
 class ListPromptsResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1736,6 +1919,7 @@ class ListPromptsResult(BaseModel):
     """
     next_cursor: str | None = None
     prompts: List[Prompt]
+
 
 class ResourceTemplate(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1778,6 +1962,7 @@ class ResourceTemplate(BaseModel):
     """A URI template (according to RFC 6570) that can be used to construct resource URIs."""
     uritemplate: str
 
+
 class ListResourceTemplatesResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1789,6 +1974,7 @@ class ListResourceTemplatesResult(BaseModel):
     """
     next_cursor: str | None = None
     resource_templates: List[ResourceTemplate]
+
 
 class Resource(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1837,6 +2023,7 @@ class Resource(BaseModel):
     """The URI of this resource."""
     uri: AnyUrl
 
+
 class ListResourcesResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1849,6 +2036,7 @@ class ListResourcesResult(BaseModel):
     next_cursor: str | None = None
     resources: List[Resource]
 
+
 class ListRootsRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1856,6 +2044,7 @@ class ListRootsRequest(BaseModel):
     jsonrpc: str
     method: str
     params: RequestParams | None = None
+
 
 class ListToolsResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1869,6 +2058,7 @@ class ListToolsResult(BaseModel):
     next_cursor: str | None = None
     tools: List[Tool]
 
+
 class LoggingMessageNotificationParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1881,13 +2071,18 @@ class LoggingMessageNotificationParams(BaseModel):
     """An optional name of the logger issuing this message."""
     logger: str | None = None
 
+
 class LoggingMessageNotification(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     jsonrpc: str
     method: str
     params: LoggingMessageNotificationParams
+
+
+
 MultiSelectEnumSchema = Union[UntitledMultiSelectEnumSchema, TitledMultiSelectEnumSchema]
+
 
 
 class Notification(BaseModel):
@@ -1895,6 +2090,7 @@ class Notification(BaseModel):
 
     method: str
     params: Dict[str, Any] | None = None
+
 
 class NumberSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1906,6 +2102,7 @@ class NumberSchema(BaseModel):
     title: str | None = None
     type: str
 
+
 class PaginatedRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1913,6 +2110,7 @@ class PaginatedRequest(BaseModel):
     jsonrpc: str
     method: str
     params: PaginatedRequestParams | None = None
+
 
 class PaginatedResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1925,6 +2123,7 @@ class PaginatedResult(BaseModel):
     """
     next_cursor: str | None = None
 
+
 class StringSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1935,11 +2134,16 @@ class StringSchema(BaseModel):
     min_length: int | None = None
     title: str | None = None
     type: str
+
+
+
 """
 Restricted schema definitions that only allow primitive types
 without nested objects or arrays.
 """
+
 PrimitiveSchemaDefinition = Union[StringSchema, NumberSchema, BooleanSchema, UntitledSingleSelectEnumSchema, TitledSingleSelectEnumSchema, UntitledMultiSelectEnumSchema, TitledMultiSelectEnumSchema, LegacyTitledEnumSchema]
+
 
 
 class PromptListChangedNotification(BaseModel):
@@ -1948,6 +2152,7 @@ class PromptListChangedNotification(BaseModel):
     jsonrpc: str
     method: str
     params: NotificationParams | None = None
+
 
 class PromptReference(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1965,6 +2170,7 @@ class PromptReference(BaseModel):
     title: str | None = None
     type: str
 
+
 class ReadResourceResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1972,17 +2178,20 @@ class ReadResourceResult(BaseModel):
     meta: Dict[str, Any] | None = None
     contents: List[Any]
 
+
 class RelatedTaskMetadata(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """The task identifier this message is associated with."""
     task_id: str
 
+
 class Request(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     method: str
     params: Dict[str, Any] | None = None
+
 
 class ResourceContents(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1994,6 +2203,7 @@ class ResourceContents(BaseModel):
     """The URI of this resource."""
     uri: AnyUrl
 
+
 class ResourceListChangedNotification(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -2001,11 +2211,13 @@ class ResourceListChangedNotification(BaseModel):
     method: str
     params: NotificationParams | None = None
 
+
 class ResourceRequestParamsMeta(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications."""
     progress_token: ProgressToken | None = None
+
 
 class ResourceRequestParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -2015,12 +2227,14 @@ class ResourceRequestParams(BaseModel):
     """The URI of the resource. The URI can use any protocol; it is up to the server how to interpret it."""
     uri: AnyUrl
 
+
 class ResourceTemplateReference(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     type: str
     """The URI or URI template of the resource."""
     uri: str
+
 
 class ResourceUpdatedNotificationParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -2030,12 +2244,14 @@ class ResourceUpdatedNotificationParams(BaseModel):
     """The URI of the resource that has been updated. This might be a sub-resource of the one that the client actually subscribed to."""
     uri: AnyUrl
 
+
 class ResourceUpdatedNotification(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     jsonrpc: str
     method: str
     params: ResourceUpdatedNotificationParams
+
 
 class ToolResultContent(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -2075,6 +2291,7 @@ class ToolResultContent(BaseModel):
     tool_use_id: str
     type: str
 
+
 class ToolUseContent(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -2096,7 +2313,11 @@ class ToolUseContent(BaseModel):
     """The name of the tool to call."""
     name: str
     type: str
+
+
+
 SamplingMessageContentBlock = Union[TextContent, ImageContent, AudioContent, ToolUseContent, ToolResultContent]
+
 
 
 class ToolListChangedNotification(BaseModel):
@@ -2105,13 +2326,26 @@ class ToolListChangedNotification(BaseModel):
     jsonrpc: str
     method: str
     params: NotificationParams | None = None
+
+
+
 ServerNotification = Union[CancelledNotification, ProgressNotification, ResourceListChangedNotification, ResourceUpdatedNotification, PromptListChangedNotification, ToolListChangedNotification, TaskStatusNotification, LoggingMessageNotification, ElicitationCompleteNotification]
+
+
+
 
 ServerRequest = Union[PingRequest, GetTaskRequest, GetTaskPayloadRequest, CancelTaskRequest, ListTasksRequest, CreateMessageRequest, ListRootsRequest, ElicitRequest]
 
+
+
+
 ServerResult = Union[Result, InitializeResult, ListResourcesResult, ListResourceTemplatesResult, ReadResourceResult, ListPromptsResult, GetPromptResult, ListToolsResult, CallToolResult, GetTaskResult, GetTaskPayloadResult, CancelTaskResult, ListTasksResult, CompleteResult]
 
+
+
+
 SingleSelectEnumSchema = Union[UntitledSingleSelectEnumSchema, TitledSingleSelectEnumSchema]
+
 
 
 class TaskAugmentedRequestParamsMeta(BaseModel):
@@ -2119,6 +2353,7 @@ class TaskAugmentedRequestParamsMeta(BaseModel):
 
     """If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications."""
     progress_token: ProgressToken | None = None
+
 
 class TaskAugmentedRequestParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -2135,6 +2370,7 @@ class TaskAugmentedRequestParams(BaseModel):
     """
     task: TaskMetadata | None = None
 
+
 class TextResourceContents(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -2147,9 +2383,11 @@ class TextResourceContents(BaseModel):
     """The URI of this resource."""
     uri: AnyUrl
 
+
 class URLElicitationRequiredError(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     error: Any
     id: RequestId | None = None
     jsonrpc: str
+

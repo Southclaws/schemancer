@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from enum import Enum
 from pydantic import BaseModel, ConfigDict
+
+
+
+
 class HttpMethod(str, Enum):
     GET = "GET"
     POST = "POST"
@@ -18,17 +22,21 @@ class ApiRequest(BaseModel):
     body: str | None = None
     method: HttpMethod
     url: str
+
+
 class Color(str, Enum):
     RED = "red"
     GREEN = "green"
     BLUE = "blue"
     YELLOW = "yellow"
 
+
 class Priority(str, Enum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
 
 class Status(str, Enum):
     PENDING = "pending"
@@ -46,3 +54,4 @@ class Task(BaseModel):
     priority: Priority | None = None
     status: Status
     title: str
+

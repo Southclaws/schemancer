@@ -1,3 +1,8 @@
+export interface BaseEvent {
+  timestamp: Date;
+  type: string;
+}
+
 
 export interface CreatedEvent {
   type: "created";

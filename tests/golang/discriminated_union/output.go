@@ -7,6 +7,11 @@ import (
 	"time"
 )
 
+type BaseEvent struct {
+	Timestamp time.Time `json:"timestamp"`
+	Type      string    `json:"type"`
+}
+
 type EventUnion interface {
 	EventType() string
 	isEvent()

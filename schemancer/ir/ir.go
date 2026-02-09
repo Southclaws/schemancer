@@ -11,6 +11,7 @@ type IRType struct {
 	Name        string
 	Description string
 	Kind        IRTypeKind
+	BaseType    string // Name of the base type this extends (from allOf $ref composition)
 	Fields      []IRField
 	Element     *IRTypeRef
 	KeyType     *IRTypeRef
