@@ -152,8 +152,8 @@ func getGeneratorOptions(cmd *cobra.Command, cfg *config.Config, language string
 	case "golang":
 		// Resolve package name: CLI flag > config > default
 		pkg := "generated"
-		if cfg != nil && cfg.Golang != nil && cfg.Golang.Package != "" {
-			pkg = cfg.Golang.Package
+		if cfg != nil && cfg.Golang != nil && cfg.Golang.Package != nil {
+			pkg = *cfg.Golang.Package
 		}
 		if goPackage != "" {
 			pkg = goPackage
@@ -162,8 +162,8 @@ func getGeneratorOptions(cmd *cobra.Command, cfg *config.Config, language string
 
 		// Resolve optional style: CLI flag > config > default
 		optStyle := "pointer"
-		if cfg != nil && cfg.Golang != nil && cfg.Golang.OptionalStyle != "" {
-			optStyle = cfg.Golang.OptionalStyle
+		if cfg != nil && cfg.Golang != nil && cfg.Golang.OptionalStyle != nil {
+			optStyle = *cfg.Golang.OptionalStyle
 		}
 		if goOptionalStyle != "" {
 			optStyle = goOptionalStyle
@@ -173,8 +173,8 @@ func getGeneratorOptions(cmd *cobra.Command, cfg *config.Config, language string
 	case "typescript":
 		// Resolve null_optional: CLI flag > config > default
 		nullOpt := false
-		if cfg != nil && cfg.TypeScript != nil {
-			nullOpt = cfg.TypeScript.NullOptional
+		if cfg != nil && cfg.Typescript != nil {
+			nullOpt = *cfg.Typescript.NullOptional
 		}
 		if cmd.Flags().Changed("null-optional") {
 			nullOpt = tsNullOptional
@@ -183,8 +183,8 @@ func getGeneratorOptions(cmd *cobra.Command, cfg *config.Config, language string
 
 		// Resolve branded_primitives: CLI flag > config > default
 		branded := false
-		if cfg != nil && cfg.TypeScript != nil {
-			branded = cfg.TypeScript.BrandedPrimitives
+		if cfg != nil && cfg.Typescript != nil {
+			branded = *cfg.Typescript.BrandedPrimitives
 		}
 		if cmd.Flags().Changed("branded-primitives") {
 			branded = tsBranded
@@ -192,15 +192,15 @@ func getGeneratorOptions(cmd *cobra.Command, cfg *config.Config, language string
 		genOpts = append(genOpts, typescript.WithBrandedTypes(branded))
 
 		// Resolve filename: config > default ("types.ts")
-		if cfg != nil && cfg.TypeScript != nil && cfg.TypeScript.Filename != "" {
-			genOpts = append(genOpts, typescript.WithFilename(cfg.TypeScript.Filename))
+		if cfg != nil && cfg.Typescript != nil && cfg.Typescript.Filename != nil {
+			genOpts = append(genOpts, typescript.WithFilename(*cfg.Typescript.Filename))
 		}
 
 	case "java":
 		// Resolve package name: CLI flag > config > default
 		pkg := "generated"
-		if cfg != nil && cfg.Java != nil && cfg.Java.Package != "" {
-			pkg = cfg.Java.Package
+		if cfg != nil && cfg.Java != nil && cfg.Java.Package != nil {
+			pkg = *cfg.Java.Package
 		}
 		if goPackage != "" {
 			pkg = goPackage
@@ -208,7 +208,7 @@ func getGeneratorOptions(cmd *cobra.Command, cfg *config.Config, language string
 		genOpts = append(genOpts, java.WithPackageName(pkg))
 
 		// Resolve accessors: config > default (false)
-		if cfg != nil && cfg.Java != nil && cfg.Java.Accessors {
+		if cfg != nil && cfg.Java != nil && cfg.Java.Accessors != nil && *cfg.Java.Accessors {
 			genOpts = append(genOpts, java.WithAccessors(true))
 		}
 

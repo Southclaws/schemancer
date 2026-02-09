@@ -361,6 +361,18 @@ func convertStructToIRType(root *jsonschema.Schema, name string, schema *jsonsch
 	}
 
 	if schema.Properties == nil {
+		// Check for typed additionalProperties (e.g. map[string]SomeType)
+		if schema.AdditionalProperties != nil && (schema.AdditionalProperties.Ref != "" || schema.AdditionalProperties.Type != "") {
+			valueRef := schemaToIRTypeRefWithContext(root, schema.AdditionalProperties, goName+"Value", inlineTypes)
+			return &ir.IRType{
+				Name:        goName,
+				Description: schema.Description,
+				Kind:        ir.IRKindAlias,
+				Element: &ir.IRTypeRef{
+					Map: &valueRef,
+				},
+			}
+		}
 		return &ir.IRType{
 			Name:        goName,
 			Description: schema.Description,
@@ -532,6 +544,11 @@ func schemaToIRTypeRefWithContext(root *jsonschema.Schema, schema *jsonschema.Sc
 				*inlineTypes = append(*inlineTypes, *inlineType)
 				return ir.IRTypeRef{Name: inlineType.Name, Constraints: constraints}
 			}
+		}
+		// Check for typed additionalProperties (e.g. map[string]SomeType)
+		if schema.AdditionalProperties != nil && (schema.AdditionalProperties.Ref != "" || schema.AdditionalProperties.Type != "") {
+			valueRef := schemaToIRTypeRefWithContext(root, schema.AdditionalProperties, contextName+"Value", inlineTypes)
+			return ir.IRTypeRef{Map: &valueRef, Constraints: constraints}
 		}
 		return ir.IRTypeRef{Map: &ir.IRTypeRef{Builtin: ir.IRBuiltinAny}, Constraints: constraints}
 	}

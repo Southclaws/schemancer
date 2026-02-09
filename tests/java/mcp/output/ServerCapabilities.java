@@ -13,7 +13,7 @@ public class ServerCapabilities {
     public ServerCapabilitiesCompletions completions;
     /** Experimental, non-standard capabilities that the server supports. */
     @JsonProperty(value = "experimental")
-    public Map<String, Object> experimental = new HashMap<>();
+    public Map<String, ServerCapabilitiesExperimentalValue> experimental = new HashMap<>();
     /** Present if the server supports sending log messages to the client. */
     @JsonProperty(value = "logging")
     public ServerCapabilitiesLogging logging;

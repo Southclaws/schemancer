@@ -13,7 +13,7 @@ public class ToolInputSchema {
     @JsonProperty(value = "$schema")
     public String schema;
     @JsonProperty(value = "properties")
-    public Map<String, Object> properties = new HashMap<>();
+    public Map<String, ToolInputSchemaPropertiesValue> properties = new HashMap<>();
     @JsonProperty(value = "required")
     public List<String> required = new ArrayList<>();
     @JsonProperty(value = "type", required = true)

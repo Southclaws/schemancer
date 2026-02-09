@@ -24,7 +24,7 @@ type Person struct {
 	Birthday     opt.Optional[time.Time]     `json:"birthday,omitempty"`
 	Email        opt.Optional[string]        `json:"email,omitempty"`
 	Friends      []PersonFriendsItem         `json:"friends,omitempty"`
-	Metadata     map[string]interface{}      `json:"metadata,omitempty"`
+	Metadata     map[string]string           `json:"metadata,omitempty"`
 	Name         string                      `json:"name"`
 	ReferralCode opt.Optional[uuid.UUID]     `json:"referralCode,omitempty"`
 	Roles        []string                    `json:"roles"`

@@ -29,11 +29,15 @@ type ArrayVariants struct {
 	UniqueArray  []string                       `json:"uniqueArray,omitempty"`
 }
 
+type MapVariantsObjectMapValue struct {
+	Value *string `json:"value,omitempty"`
+}
+
 type MapVariants struct {
-	AnyMap    map[string]interface{} `json:"anyMap,omitempty"`
-	IntMap    map[string]interface{} `json:"intMap,omitempty"`
-	ObjectMap map[string]interface{} `json:"objectMap,omitempty"`
-	StringMap map[string]interface{} `json:"stringMap,omitempty"`
+	AnyMap    map[string]interface{}               `json:"anyMap,omitempty"`
+	IntMap    map[string]int                       `json:"intMap,omitempty"`
+	ObjectMap map[string]MapVariantsObjectMapValue `json:"objectMap,omitempty"`
+	StringMap map[string]string                    `json:"stringMap,omitempty"`
 }
 
 type NumberConstraints struct {

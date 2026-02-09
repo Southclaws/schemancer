@@ -331,6 +331,9 @@ export interface ClientCapabilitiesElicitation {
   url?: ClientCapabilitiesElicitationURL;
 }
 
+export interface ClientCapabilitiesExperimentalValue {
+}
+
 // Present if the client supports listing roots.
 export interface ClientCapabilitiesRoots {
   // Whether the client supports notifications for changes to the roots list.
@@ -406,7 +409,7 @@ export interface ClientCapabilities {
   // Present if the client supports elicitation from the server.
   elicitation?: ClientCapabilitiesElicitation;
   // Experimental, non-standard capabilities that the client supports.
-  experimental?: Record<string, unknown>;
+  experimental?: Record<string, ClientCapabilitiesExperimentalValue>;
   // Present if the client supports listing roots.
   roots?: ClientCapabilitiesRoots;
   // Present if the client supports sampling from an LLM.
@@ -501,7 +504,7 @@ export interface CompleteRequestParamsArgument {
 // Additional, optional context for completions
 export interface CompleteRequestParamsContext {
   // Previously-resolved variables in a URI template or prompt.
-  arguments?: Record<string, unknown>;
+  arguments?: Record<string, string>;
 }
 
 // See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
@@ -540,7 +543,7 @@ export interface GetPromptRequestParams {
   // See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
   _meta?: GetPromptRequestParamsMeta;
   // Arguments to use for templating the prompt.
-  arguments?: Record<string, unknown>;
+  arguments?: Record<string, string>;
   // The name of the prompt or prompt template.
   name: string;
 }
@@ -1083,12 +1086,18 @@ export interface ToolExecution {
   taskSupport?: string;
 }
 
+export interface ToolInputSchemaPropertiesValue {
+}
+
 // A JSON Schema object defining the expected parameters for the tool.
 export interface ToolInputSchema {
   $schema?: string;
-  properties?: Record<string, unknown>;
+  properties?: Record<string, ToolInputSchemaPropertiesValue>;
   required?: string[];
   type: string;
+}
+
+export interface ToolOutputSchemaPropertiesValue {
 }
 
 // An optional JSON Schema object defining the structure of the tool's output returned in
@@ -1098,7 +1107,7 @@ export interface ToolInputSchema {
 // Currently restricted to type: "object" at the root level.
 export interface ToolOutputSchema {
   $schema?: string;
-  properties?: Record<string, unknown>;
+  properties?: Record<string, ToolOutputSchemaPropertiesValue>;
   required?: string[];
   type: string;
 }
@@ -1218,89 +1227,6 @@ export interface ElicitRequestFormParamsMeta {
   progressToken?: ProgressToken;
 }
 
-// A restricted subset of JSON Schema.
-// Only top-level properties are allowed, without nesting.
-export interface ElicitRequestFormParamsRequestedSchema {
-  $schema?: string;
-  properties: Record<string, unknown>;
-  required?: string[];
-  type: string;
-}
-
-// The parameters for a request to elicit non-sensitive information from the user via a form in the client.
-export interface ElicitRequestFormParams {
-  // See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
-  _meta?: ElicitRequestFormParamsMeta;
-  // The message to present to the user describing what information is being requested.
-  message: string;
-  // The elicitation mode.
-  mode?: string;
-  // A restricted subset of JSON Schema.
-  // Only top-level properties are allowed, without nesting.
-  requestedSchema: ElicitRequestFormParamsRequestedSchema;
-  // If specified, the caller is requesting task-augmented execution for this request.
-  // The request will return a CreateTaskResult immediately, and the actual result can be
-  // retrieved later via tasks/result.
-  // 
-  // Task augmentation is subject to capability negotiation - receivers MUST declare support
-  // for task augmentation of specific request types in their capabilities.
-  task?: TaskMetadata;
-}
-
-// See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
-export interface ElicitRequestURLParamsMeta {
-  // If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications.
-  progressToken?: ProgressToken;
-}
-
-// The parameters for a request to elicit information from the user via a URL in the client.
-export interface ElicitRequestURLParams {
-  // See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
-  _meta?: ElicitRequestURLParamsMeta;
-  // The ID of the elicitation, which must be unique within the context of the server.
-  // The client MUST treat this ID as an opaque value.
-  elicitationId: string;
-  // The message to present to the user explaining why the interaction is needed.
-  message: string;
-  // The elicitation mode.
-  mode: string;
-  // If specified, the caller is requesting task-augmented execution for this request.
-  // The request will return a CreateTaskResult immediately, and the actual result can be
-  // retrieved later via tasks/result.
-  // 
-  // Task augmentation is subject to capability negotiation - receivers MUST declare support
-  // for task augmentation of specific request types in their capabilities.
-  task?: TaskMetadata;
-  // The URL that the user should navigate to.
-  url: string;
-}
-
-
-// The parameters for a request to elicit additional information from the user via the client.
-export type ElicitRequestParams = ElicitRequestURLParams | ElicitRequestFormParams;
-
-// A request from the server to elicit additional information from the user via the client.
-export interface ElicitRequest {
-  id: RequestId;
-  jsonrpc: string;
-  method: string;
-  params: ElicitRequestParams;
-}
-
-export interface ElicitationCompleteNotificationParams {
-  // The ID of the elicitation that completed.
-  elicitationId: string;
-}
-
-// An optional notification from the server to the client, informing it of a completion of a out-of-band elicitation request.
-export interface ElicitationCompleteNotification {
-  jsonrpc: string;
-  method: string;
-  params: ElicitationCompleteNotificationParams;
-}
-
-export type EmptyResult = unknown;
-
 // Use TitledSingleSelectEnumSchema instead.
 // This interface will be removed in a future version.
 export interface LegacyTitledEnumSchema {
@@ -1310,6 +1236,25 @@ export interface LegacyTitledEnumSchema {
   // (Legacy) Display names for enum values.
   // Non-standard according to JSON schema 2020-12.
   enumNames?: string[];
+  title?: string;
+  type: string;
+}
+
+export interface NumberSchema {
+  default?: number;
+  description?: string;
+  maximum?: number;
+  minimum?: number;
+  title?: string;
+  type: string;
+}
+
+export interface StringSchema {
+  default?: string;
+  description?: string;
+  format?: string;
+  maxLength?: number;
+  minLength?: number;
   title?: string;
   type: string;
 }
@@ -1401,6 +1346,94 @@ export interface UntitledSingleSelectEnumSchema {
   type: string;
 }
 
+
+// Restricted schema definitions that only allow primitive types
+// without nested objects or arrays.
+export type PrimitiveSchemaDefinition = StringSchema | NumberSchema | BooleanSchema | UntitledSingleSelectEnumSchema | TitledSingleSelectEnumSchema | UntitledMultiSelectEnumSchema | TitledMultiSelectEnumSchema | LegacyTitledEnumSchema;
+
+// A restricted subset of JSON Schema.
+// Only top-level properties are allowed, without nesting.
+export interface ElicitRequestFormParamsRequestedSchema {
+  $schema?: string;
+  properties: Record<string, PrimitiveSchemaDefinition>;
+  required?: string[];
+  type: string;
+}
+
+// The parameters for a request to elicit non-sensitive information from the user via a form in the client.
+export interface ElicitRequestFormParams {
+  // See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
+  _meta?: ElicitRequestFormParamsMeta;
+  // The message to present to the user describing what information is being requested.
+  message: string;
+  // The elicitation mode.
+  mode?: string;
+  // A restricted subset of JSON Schema.
+  // Only top-level properties are allowed, without nesting.
+  requestedSchema: ElicitRequestFormParamsRequestedSchema;
+  // If specified, the caller is requesting task-augmented execution for this request.
+  // The request will return a CreateTaskResult immediately, and the actual result can be
+  // retrieved later via tasks/result.
+  // 
+  // Task augmentation is subject to capability negotiation - receivers MUST declare support
+  // for task augmentation of specific request types in their capabilities.
+  task?: TaskMetadata;
+}
+
+// See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
+export interface ElicitRequestURLParamsMeta {
+  // If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications.
+  progressToken?: ProgressToken;
+}
+
+// The parameters for a request to elicit information from the user via a URL in the client.
+export interface ElicitRequestURLParams {
+  // See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
+  _meta?: ElicitRequestURLParamsMeta;
+  // The ID of the elicitation, which must be unique within the context of the server.
+  // The client MUST treat this ID as an opaque value.
+  elicitationId: string;
+  // The message to present to the user explaining why the interaction is needed.
+  message: string;
+  // The elicitation mode.
+  mode: string;
+  // If specified, the caller is requesting task-augmented execution for this request.
+  // The request will return a CreateTaskResult immediately, and the actual result can be
+  // retrieved later via tasks/result.
+  // 
+  // Task augmentation is subject to capability negotiation - receivers MUST declare support
+  // for task augmentation of specific request types in their capabilities.
+  task?: TaskMetadata;
+  // The URL that the user should navigate to.
+  url: string;
+}
+
+
+// The parameters for a request to elicit additional information from the user via the client.
+export type ElicitRequestParams = ElicitRequestURLParams | ElicitRequestFormParams;
+
+// A request from the server to elicit additional information from the user via the client.
+export interface ElicitRequest {
+  id: RequestId;
+  jsonrpc: string;
+  method: string;
+  params: ElicitRequestParams;
+}
+
+export interface ElicitationCompleteNotificationParams {
+  // The ID of the elicitation that completed.
+  elicitationId: string;
+}
+
+// An optional notification from the server to the client, informing it of a completion of a out-of-band elicitation request.
+export interface ElicitationCompleteNotification {
+  jsonrpc: string;
+  method: string;
+  params: ElicitationCompleteNotificationParams;
+}
+
+export type EmptyResult = unknown;
+
 export type EnumSchema = UntitledSingleSelectEnumSchema | TitledSingleSelectEnumSchema | UntitledMultiSelectEnumSchema | TitledMultiSelectEnumSchema | LegacyTitledEnumSchema;
 
 export interface Error {
@@ -1446,6 +1479,9 @@ export interface Icons {
 
 // Present if the server supports argument autocompletion suggestions.
 export interface ServerCapabilitiesCompletions {
+}
+
+export interface ServerCapabilitiesExperimentalValue {
 }
 
 // Present if the server supports sending log messages to the client.
@@ -1511,7 +1547,7 @@ export interface ServerCapabilities {
   // Present if the server supports argument autocompletion suggestions.
   completions?: ServerCapabilitiesCompletions;
   // Experimental, non-standard capabilities that the server supports.
-  experimental?: Record<string, unknown>;
+  experimental?: Record<string, ServerCapabilitiesExperimentalValue>;
   // Present if the server supports sending log messages to the client.
   logging?: ServerCapabilitiesLogging;
   // Present if the server offers any prompt templates.
@@ -1775,15 +1811,6 @@ export interface Notification {
   params?: Record<string, unknown>;
 }
 
-export interface NumberSchema {
-  default?: number;
-  description?: string;
-  maximum?: number;
-  minimum?: number;
-  title?: string;
-  type: string;
-}
-
 export interface PaginatedRequest {
   id: RequestId;
   jsonrpc: string;
@@ -1798,21 +1825,6 @@ export interface PaginatedResult {
   // If present, there may be more results available.
   nextCursor?: string;
 }
-
-export interface StringSchema {
-  default?: string;
-  description?: string;
-  format?: string;
-  maxLength?: number;
-  minLength?: number;
-  title?: string;
-  type: string;
-}
-
-
-// Restricted schema definitions that only allow primitive types
-// without nested objects or arrays.
-export type PrimitiveSchemaDefinition = StringSchema | NumberSchema | BooleanSchema | UntitledSingleSelectEnumSchema | TitledSingleSelectEnumSchema | UntitledMultiSelectEnumSchema | TitledMultiSelectEnumSchema | LegacyTitledEnumSchema;
 
 // An optional notification from the server to the client, informing it that the list of prompts it offers has changed. This may be issued by servers without any previous subscription from the client.
 export interface PromptListChangedNotification {

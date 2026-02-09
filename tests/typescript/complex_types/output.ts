@@ -16,7 +16,7 @@ export interface Item {
   // Unique identifier for the item.
   id: string;
   // Additional key-value metadata.
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, string>;
   // Tags associated with this item.
   tags?: string[];
   // The type classification of this item.

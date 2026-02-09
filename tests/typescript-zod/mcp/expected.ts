@@ -251,6 +251,10 @@ export const ClientCapabilitiesElicitationSchema = z.object({
 });
 export type ClientCapabilitiesElicitation = z.infer<typeof ClientCapabilitiesElicitationSchema>;
 
+export const ClientCapabilitiesExperimentalValueSchema = z.object({
+});
+export type ClientCapabilitiesExperimentalValue = z.infer<typeof ClientCapabilitiesExperimentalValueSchema>;
+
 
 // Present if the client supports listing roots.
 export const ClientCapabilitiesRootsSchema = z.object({
@@ -338,7 +342,7 @@ export type ClientCapabilitiesTasks = z.infer<typeof ClientCapabilitiesTasksSche
 // Capabilities a client may support. Known capabilities are defined here, in this schema, but this is not a closed set: any client can define its own, additional capabilities.
 export const ClientCapabilitiesSchema = z.object({
   elicitation: ClientCapabilitiesElicitationSchema.optional(),
-  experimental: z.record(z.string(), z.unknown()).optional(),
+  experimental: z.record(z.string(), ClientCapabilitiesExperimentalValueSchema).optional(),
   roots: ClientCapabilitiesRootsSchema.optional(),
   sampling: ClientCapabilitiesSamplingSchema.optional(),
   tasks: ClientCapabilitiesTasksSchema.optional(),
@@ -433,7 +437,7 @@ export type CompleteRequestParamsArgument = z.infer<typeof CompleteRequestParams
 
 // Additional, optional context for completions
 export const CompleteRequestParamsContextSchema = z.object({
-  arguments: z.record(z.string(), z.unknown()).optional(),
+  arguments: z.record(z.string(), z.string()).optional(),
 });
 export type CompleteRequestParamsContext = z.infer<typeof CompleteRequestParamsContextSchema>;
 
@@ -475,7 +479,7 @@ export type GetPromptRequestParamsMeta = z.infer<typeof GetPromptRequestParamsMe
 // Parameters for a `prompts/get` request.
 export const GetPromptRequestParamsSchema = z.object({
   _meta: GetPromptRequestParamsMetaSchema.optional(),
-  arguments: z.record(z.string(), z.unknown()).optional(),
+  arguments: z.record(z.string(), z.string()).optional(),
   name: z.string(),
 });
 export type GetPromptRequestParams = z.infer<typeof GetPromptRequestParamsSchema>;
@@ -972,15 +976,23 @@ export const ToolExecutionSchema = z.object({
 });
 export type ToolExecution = z.infer<typeof ToolExecutionSchema>;
 
+export const ToolInputSchemaPropertiesValueSchema = z.object({
+});
+export type ToolInputSchemaPropertiesValue = z.infer<typeof ToolInputSchemaPropertiesValueSchema>;
+
 
 // A JSON Schema object defining the expected parameters for the tool.
 export const ToolInputSchemaSchema = z.object({
   $schema: z.string().optional(),
-  properties: z.record(z.string(), z.unknown()).optional(),
+  properties: z.record(z.string(), ToolInputSchemaPropertiesValueSchema).optional(),
   required: z.array(z.string()).optional(),
   type: z.string(),
 });
 export type ToolInputSchema = z.infer<typeof ToolInputSchemaSchema>;
+
+export const ToolOutputSchemaPropertiesValueSchema = z.object({
+});
+export type ToolOutputSchemaPropertiesValue = z.infer<typeof ToolOutputSchemaPropertiesValueSchema>;
 
 
 // An optional JSON Schema object defining the structure of the tool's output returned in
@@ -990,7 +1002,7 @@ export type ToolInputSchema = z.infer<typeof ToolInputSchemaSchema>;
 // Currently restricted to type: "object" at the root level.
 export const ToolOutputSchemaSchema = z.object({
   $schema: z.string().optional(),
-  properties: z.record(z.string(), z.unknown()).optional(),
+  properties: z.record(z.string(), ToolOutputSchemaPropertiesValueSchema).optional(),
   required: z.array(z.string()).optional(),
   type: z.string(),
 });
@@ -1067,82 +1079,6 @@ export const ElicitRequestFormParamsMetaSchema = z.object({
 export type ElicitRequestFormParamsMeta = z.infer<typeof ElicitRequestFormParamsMetaSchema>;
 
 
-// A restricted subset of JSON Schema.
-// Only top-level properties are allowed, without nesting.
-export const ElicitRequestFormParamsRequestedSchemaSchema = z.object({
-  $schema: z.string().optional(),
-  properties: z.record(z.string(), z.unknown()),
-  required: z.array(z.string()).optional(),
-  type: z.string(),
-});
-export type ElicitRequestFormParamsRequestedSchema = z.infer<typeof ElicitRequestFormParamsRequestedSchemaSchema>;
-
-
-// The parameters for a request to elicit non-sensitive information from the user via a form in the client.
-export const ElicitRequestFormParamsSchema = z.object({
-  _meta: ElicitRequestFormParamsMetaSchema.optional(),
-  message: z.string(),
-  mode: z.string().optional(),
-  requestedSchema: ElicitRequestFormParamsRequestedSchemaSchema,
-  task: TaskMetadataSchema.optional(),
-});
-export type ElicitRequestFormParams = z.infer<typeof ElicitRequestFormParamsSchema>;
-
-
-// See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
-export const ElicitRequestURLParamsMetaSchema = z.object({
-  progressToken: ProgressTokenSchema.optional(),
-});
-export type ElicitRequestURLParamsMeta = z.infer<typeof ElicitRequestURLParamsMetaSchema>;
-
-
-// The parameters for a request to elicit information from the user via a URL in the client.
-export const ElicitRequestURLParamsSchema = z.object({
-  _meta: ElicitRequestURLParamsMetaSchema.optional(),
-  elicitationId: z.string(),
-  message: z.string(),
-  mode: z.string(),
-  task: TaskMetadataSchema.optional(),
-  url: z.string().url(),
-});
-export type ElicitRequestURLParams = z.infer<typeof ElicitRequestURLParamsSchema>;
-
-
-// The parameters for a request to elicit additional information from the user via the client.
-export const ElicitRequestParamsSchema = z.union([
-  ElicitRequestURLParamsSchema,
-  ElicitRequestFormParamsSchema,
-]);
-export type ElicitRequestParams = z.infer<typeof ElicitRequestParamsSchema>;
-
-
-// A request from the server to elicit additional information from the user via the client.
-export const ElicitRequestSchema = z.object({
-  id: RequestIdSchema,
-  jsonrpc: z.string(),
-  method: z.string(),
-  params: ElicitRequestParamsSchema,
-});
-export type ElicitRequest = z.infer<typeof ElicitRequestSchema>;
-
-export const ElicitationCompleteNotificationParamsSchema = z.object({
-  elicitationId: z.string(),
-});
-export type ElicitationCompleteNotificationParams = z.infer<typeof ElicitationCompleteNotificationParamsSchema>;
-
-
-// An optional notification from the server to the client, informing it of a completion of a out-of-band elicitation request.
-export const ElicitationCompleteNotificationSchema = z.object({
-  jsonrpc: z.string(),
-  method: z.string(),
-  params: ElicitationCompleteNotificationParamsSchema,
-});
-export type ElicitationCompleteNotification = z.infer<typeof ElicitationCompleteNotificationSchema>;
-
-export const EmptyResultSchema = z.unknown();
-export type EmptyResult = z.infer<typeof EmptyResultSchema>;
-
-
 // Use TitledSingleSelectEnumSchema instead.
 // This interface will be removed in a future version.
 export const LegacyTitledEnumSchemaSchema = z.object({
@@ -1154,6 +1090,27 @@ export const LegacyTitledEnumSchemaSchema = z.object({
   type: z.string(),
 });
 export type LegacyTitledEnumSchema = z.infer<typeof LegacyTitledEnumSchemaSchema>;
+
+export const NumberSchemaSchema = z.object({
+  default: z.number().int().optional(),
+  description: z.string().optional(),
+  maximum: z.number().int().optional(),
+  minimum: z.number().int().optional(),
+  title: z.string().optional(),
+  type: z.string(),
+});
+export type NumberSchema = z.infer<typeof NumberSchemaSchema>;
+
+export const StringSchemaSchema = z.object({
+  default: z.string().optional(),
+  description: z.string().optional(),
+  format: z.string().optional(),
+  maxLength: z.number().int().optional(),
+  minLength: z.number().int().optional(),
+  title: z.string().optional(),
+  type: z.string(),
+});
+export type StringSchema = z.infer<typeof StringSchemaSchema>;
 
 export const TitledMultiSelectEnumSchemaItemsAnyOfItemSchema = z.object({
   const: z.string(),
@@ -1230,6 +1187,97 @@ export const UntitledSingleSelectEnumSchemaSchema = z.object({
 });
 export type UntitledSingleSelectEnumSchema = z.infer<typeof UntitledSingleSelectEnumSchemaSchema>;
 
+
+// Restricted schema definitions that only allow primitive types
+// without nested objects or arrays.
+export const PrimitiveSchemaDefinitionSchema = z.union([
+  StringSchemaSchema,
+  NumberSchemaSchema,
+  BooleanSchemaSchema,
+  UntitledSingleSelectEnumSchemaSchema,
+  TitledSingleSelectEnumSchemaSchema,
+  UntitledMultiSelectEnumSchemaSchema,
+  TitledMultiSelectEnumSchemaSchema,
+  LegacyTitledEnumSchemaSchema,
+]);
+export type PrimitiveSchemaDefinition = z.infer<typeof PrimitiveSchemaDefinitionSchema>;
+
+
+// A restricted subset of JSON Schema.
+// Only top-level properties are allowed, without nesting.
+export const ElicitRequestFormParamsRequestedSchemaSchema = z.object({
+  $schema: z.string().optional(),
+  properties: z.record(z.string(), PrimitiveSchemaDefinitionSchema),
+  required: z.array(z.string()).optional(),
+  type: z.string(),
+});
+export type ElicitRequestFormParamsRequestedSchema = z.infer<typeof ElicitRequestFormParamsRequestedSchemaSchema>;
+
+
+// The parameters for a request to elicit non-sensitive information from the user via a form in the client.
+export const ElicitRequestFormParamsSchema = z.object({
+  _meta: ElicitRequestFormParamsMetaSchema.optional(),
+  message: z.string(),
+  mode: z.string().optional(),
+  requestedSchema: ElicitRequestFormParamsRequestedSchemaSchema,
+  task: TaskMetadataSchema.optional(),
+});
+export type ElicitRequestFormParams = z.infer<typeof ElicitRequestFormParamsSchema>;
+
+
+// See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
+export const ElicitRequestURLParamsMetaSchema = z.object({
+  progressToken: ProgressTokenSchema.optional(),
+});
+export type ElicitRequestURLParamsMeta = z.infer<typeof ElicitRequestURLParamsMetaSchema>;
+
+
+// The parameters for a request to elicit information from the user via a URL in the client.
+export const ElicitRequestURLParamsSchema = z.object({
+  _meta: ElicitRequestURLParamsMetaSchema.optional(),
+  elicitationId: z.string(),
+  message: z.string(),
+  mode: z.string(),
+  task: TaskMetadataSchema.optional(),
+  url: z.string().url(),
+});
+export type ElicitRequestURLParams = z.infer<typeof ElicitRequestURLParamsSchema>;
+
+
+// The parameters for a request to elicit additional information from the user via the client.
+export const ElicitRequestParamsSchema = z.union([
+  ElicitRequestURLParamsSchema,
+  ElicitRequestFormParamsSchema,
+]);
+export type ElicitRequestParams = z.infer<typeof ElicitRequestParamsSchema>;
+
+
+// A request from the server to elicit additional information from the user via the client.
+export const ElicitRequestSchema = z.object({
+  id: RequestIdSchema,
+  jsonrpc: z.string(),
+  method: z.string(),
+  params: ElicitRequestParamsSchema,
+});
+export type ElicitRequest = z.infer<typeof ElicitRequestSchema>;
+
+export const ElicitationCompleteNotificationParamsSchema = z.object({
+  elicitationId: z.string(),
+});
+export type ElicitationCompleteNotificationParams = z.infer<typeof ElicitationCompleteNotificationParamsSchema>;
+
+
+// An optional notification from the server to the client, informing it of a completion of a out-of-band elicitation request.
+export const ElicitationCompleteNotificationSchema = z.object({
+  jsonrpc: z.string(),
+  method: z.string(),
+  params: ElicitationCompleteNotificationParamsSchema,
+});
+export type ElicitationCompleteNotification = z.infer<typeof ElicitationCompleteNotificationSchema>;
+
+export const EmptyResultSchema = z.unknown();
+export type EmptyResult = z.infer<typeof EmptyResultSchema>;
+
 export const EnumSchemaSchema = z.union([
   UntitledSingleSelectEnumSchemaSchema,
   TitledSingleSelectEnumSchemaSchema,
@@ -1278,6 +1326,10 @@ export type Icons = z.infer<typeof IconsSchema>;
 export const ServerCapabilitiesCompletionsSchema = z.object({
 });
 export type ServerCapabilitiesCompletions = z.infer<typeof ServerCapabilitiesCompletionsSchema>;
+
+export const ServerCapabilitiesExperimentalValueSchema = z.object({
+});
+export type ServerCapabilitiesExperimentalValue = z.infer<typeof ServerCapabilitiesExperimentalValueSchema>;
 
 
 // Present if the server supports sending log messages to the client.
@@ -1352,7 +1404,7 @@ export type ServerCapabilitiesTools = z.infer<typeof ServerCapabilitiesToolsSche
 // Capabilities that a server may support. Known capabilities are defined here, in this schema, but this is not a closed set: any server can define its own, additional capabilities.
 export const ServerCapabilitiesSchema = z.object({
   completions: ServerCapabilitiesCompletionsSchema.optional(),
-  experimental: z.record(z.string(), z.unknown()).optional(),
+  experimental: z.record(z.string(), ServerCapabilitiesExperimentalValueSchema).optional(),
   logging: ServerCapabilitiesLoggingSchema.optional(),
   prompts: ServerCapabilitiesPromptsSchema.optional(),
   resources: ServerCapabilitiesResourcesSchema.optional(),
@@ -1561,16 +1613,6 @@ export const NotificationSchema = z.object({
 });
 export type Notification = z.infer<typeof NotificationSchema>;
 
-export const NumberSchemaSchema = z.object({
-  default: z.number().int().optional(),
-  description: z.string().optional(),
-  maximum: z.number().int().optional(),
-  minimum: z.number().int().optional(),
-  title: z.string().optional(),
-  type: z.string(),
-});
-export type NumberSchema = z.infer<typeof NumberSchemaSchema>;
-
 export const PaginatedRequestSchema = z.object({
   id: RequestIdSchema,
   jsonrpc: z.string(),
@@ -1584,32 +1626,6 @@ export const PaginatedResultSchema = z.object({
   nextCursor: z.string().optional(),
 });
 export type PaginatedResult = z.infer<typeof PaginatedResultSchema>;
-
-export const StringSchemaSchema = z.object({
-  default: z.string().optional(),
-  description: z.string().optional(),
-  format: z.string().optional(),
-  maxLength: z.number().int().optional(),
-  minLength: z.number().int().optional(),
-  title: z.string().optional(),
-  type: z.string(),
-});
-export type StringSchema = z.infer<typeof StringSchemaSchema>;
-
-
-// Restricted schema definitions that only allow primitive types
-// without nested objects or arrays.
-export const PrimitiveSchemaDefinitionSchema = z.union([
-  StringSchemaSchema,
-  NumberSchemaSchema,
-  BooleanSchemaSchema,
-  UntitledSingleSelectEnumSchemaSchema,
-  TitledSingleSelectEnumSchemaSchema,
-  UntitledMultiSelectEnumSchemaSchema,
-  TitledMultiSelectEnumSchemaSchema,
-  LegacyTitledEnumSchemaSchema,
-]);
-export type PrimitiveSchemaDefinition = z.infer<typeof PrimitiveSchemaDefinitionSchema>;
 
 
 // An optional notification from the server to the client, informing it that the list of prompts it offers has changed. This may be issued by servers without any previous subscription from the client.

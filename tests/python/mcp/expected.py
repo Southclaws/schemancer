@@ -397,6 +397,12 @@ class ClientCapabilitiesElicitation(BaseModel):
     url: ClientCapabilitiesElicitationURL | None = None
 
 
+class ClientCapabilitiesExperimentalValue(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    pass
+
+
 class ClientCapabilitiesRoots(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -492,7 +498,7 @@ class ClientCapabilities(BaseModel):
     """Present if the client supports elicitation from the server."""
     elicitation: ClientCapabilitiesElicitation | None = None
     """Experimental, non-standard capabilities that the client supports."""
-    experimental: Dict[str, Any] | None = None
+    experimental: Dict[str, ClientCapabilitiesExperimentalValue] | None = None
     """Present if the client supports listing roots."""
     roots: ClientCapabilitiesRoots | None = None
     """Present if the client supports sampling from an LLM."""
@@ -598,7 +604,7 @@ class CompleteRequestParamsContext(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     """Previously-resolved variables in a URI template or prompt."""
-    arguments: Dict[str, Any] | None = None
+    arguments: Dict[str, str] | None = None
 
 
 class CompleteRequestParamsMeta(BaseModel):
@@ -642,7 +648,7 @@ class GetPromptRequestParams(BaseModel):
     """See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage."""
     meta: GetPromptRequestParamsMeta | None = None
     """Arguments to use for templating the prompt."""
-    arguments: Dict[str, Any] | None = None
+    arguments: Dict[str, str] | None = None
     """The name of the prompt or prompt template."""
     name: str
 
@@ -1264,20 +1270,32 @@ class ToolExecution(BaseModel):
     task_support: str | None = None
 
 
+class ToolInputSchemaPropertiesValue(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    pass
+
+
 class ToolInputSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     schema: str | None = None
-    properties: Dict[str, Any] | None = None
+    properties: Dict[str, ToolInputSchemaPropertiesValue] | None = None
     required: List[str] | None = None
     type: str
+
+
+class ToolOutputSchemaPropertiesValue(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    pass
 
 
 class ToolOutputSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     schema: str | None = None
-    properties: Dict[str, Any] | None = None
+    properties: Dict[str, ToolOutputSchemaPropertiesValue] | None = None
     required: List[str] | None = None
     type: str
 
@@ -1428,109 +1446,6 @@ class ElicitRequestFormParamsMeta(BaseModel):
     progress_token: ProgressToken | None = None
 
 
-class ElicitRequestFormParamsRequestedSchema(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    schema: str | None = None
-    properties: Dict[str, Any]
-    required: List[str] | None = None
-    type: str
-
-
-class ElicitRequestFormParams(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    """See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage."""
-    meta: ElicitRequestFormParamsMeta | None = None
-    """The message to present to the user describing what information is being requested."""
-    message: str
-    """The elicitation mode."""
-    mode: str | None = None
-    """
-    A restricted subset of JSON Schema.
-    Only top-level properties are allowed, without nesting.
-    """
-    requested_schema: ElicitRequestFormParamsRequestedSchema
-    """
-    If specified, the caller is requesting task-augmented execution for this request.
-    The request will return a CreateTaskResult immediately, and the actual result can be
-    retrieved later via tasks/result.
-    
-    Task augmentation is subject to capability negotiation - receivers MUST declare support
-    for task augmentation of specific request types in their capabilities.
-    """
-    task: TaskMetadata | None = None
-
-
-class ElicitRequestURLParamsMeta(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    """If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications."""
-    progress_token: ProgressToken | None = None
-
-
-class ElicitRequestURLParams(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    """See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage."""
-    meta: ElicitRequestURLParamsMeta | None = None
-    """
-    The ID of the elicitation, which must be unique within the context of the server.
-    The client MUST treat this ID as an opaque value.
-    """
-    elicitation_id: str
-    """The message to present to the user explaining why the interaction is needed."""
-    message: str
-    """The elicitation mode."""
-    mode: str
-    """
-    If specified, the caller is requesting task-augmented execution for this request.
-    The request will return a CreateTaskResult immediately, and the actual result can be
-    retrieved later via tasks/result.
-    
-    Task augmentation is subject to capability negotiation - receivers MUST declare support
-    for task augmentation of specific request types in their capabilities.
-    """
-    task: TaskMetadata | None = None
-    """The URL that the user should navigate to."""
-    url: AnyUrl
-
-
-
-"""The parameters for a request to elicit additional information from the user via the client."""
-
-ElicitRequestParams = Union[ElicitRequestURLParams, ElicitRequestFormParams]
-
-
-
-class ElicitRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    id: RequestId
-    jsonrpc: str
-    method: str
-    params: ElicitRequestParams
-
-
-class ElicitationCompleteNotificationParams(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    """The ID of the elicitation that completed."""
-    elicitation_id: str
-
-
-class ElicitationCompleteNotification(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    jsonrpc: str
-    method: str
-    params: ElicitationCompleteNotificationParams
-
-
-class EmptyResult(RootModel[Any]):
-    pass
-
-
 class LegacyTitledEnumSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1542,6 +1457,29 @@ class LegacyTitledEnumSchema(BaseModel):
     Non-standard according to JSON schema 2020-12.
     """
     enum_names: List[str] | None = None
+    title: str | None = None
+    type: str
+
+
+class NumberSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    default: int | None = None
+    description: str | None = None
+    maximum: int | None = None
+    minimum: int | None = None
+    title: str | None = None
+    type: str
+
+
+class StringSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    default: str | None = None
+    description: str | None = None
+    format: str | None = None
+    max_length: int | None = None
+    min_length: int | None = None
     title: str | None = None
     type: str
 
@@ -1644,6 +1582,119 @@ class UntitledSingleSelectEnumSchema(BaseModel):
 
 
 
+"""
+Restricted schema definitions that only allow primitive types
+without nested objects or arrays.
+"""
+
+PrimitiveSchemaDefinition = Union[StringSchema, NumberSchema, BooleanSchema, UntitledSingleSelectEnumSchema, TitledSingleSelectEnumSchema, UntitledMultiSelectEnumSchema, TitledMultiSelectEnumSchema, LegacyTitledEnumSchema]
+
+
+
+class ElicitRequestFormParamsRequestedSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    schema: str | None = None
+    properties: Dict[str, PrimitiveSchemaDefinition]
+    required: List[str] | None = None
+    type: str
+
+
+class ElicitRequestFormParams(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    """See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage."""
+    meta: ElicitRequestFormParamsMeta | None = None
+    """The message to present to the user describing what information is being requested."""
+    message: str
+    """The elicitation mode."""
+    mode: str | None = None
+    """
+    A restricted subset of JSON Schema.
+    Only top-level properties are allowed, without nesting.
+    """
+    requested_schema: ElicitRequestFormParamsRequestedSchema
+    """
+    If specified, the caller is requesting task-augmented execution for this request.
+    The request will return a CreateTaskResult immediately, and the actual result can be
+    retrieved later via tasks/result.
+    
+    Task augmentation is subject to capability negotiation - receivers MUST declare support
+    for task augmentation of specific request types in their capabilities.
+    """
+    task: TaskMetadata | None = None
+
+
+class ElicitRequestURLParamsMeta(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    """If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications."""
+    progress_token: ProgressToken | None = None
+
+
+class ElicitRequestURLParams(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    """See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage."""
+    meta: ElicitRequestURLParamsMeta | None = None
+    """
+    The ID of the elicitation, which must be unique within the context of the server.
+    The client MUST treat this ID as an opaque value.
+    """
+    elicitation_id: str
+    """The message to present to the user explaining why the interaction is needed."""
+    message: str
+    """The elicitation mode."""
+    mode: str
+    """
+    If specified, the caller is requesting task-augmented execution for this request.
+    The request will return a CreateTaskResult immediately, and the actual result can be
+    retrieved later via tasks/result.
+    
+    Task augmentation is subject to capability negotiation - receivers MUST declare support
+    for task augmentation of specific request types in their capabilities.
+    """
+    task: TaskMetadata | None = None
+    """The URL that the user should navigate to."""
+    url: AnyUrl
+
+
+
+"""The parameters for a request to elicit additional information from the user via the client."""
+
+ElicitRequestParams = Union[ElicitRequestURLParams, ElicitRequestFormParams]
+
+
+
+class ElicitRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: RequestId
+    jsonrpc: str
+    method: str
+    params: ElicitRequestParams
+
+
+class ElicitationCompleteNotificationParams(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    """The ID of the elicitation that completed."""
+    elicitation_id: str
+
+
+class ElicitationCompleteNotification(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    jsonrpc: str
+    method: str
+    params: ElicitationCompleteNotificationParams
+
+
+class EmptyResult(RootModel[Any]):
+    pass
+
+
+
 EnumSchema = Union[UntitledSingleSelectEnumSchema, TitledSingleSelectEnumSchema, UntitledMultiSelectEnumSchema, TitledMultiSelectEnumSchema, LegacyTitledEnumSchema]
 
 
@@ -1694,6 +1745,12 @@ class Icons(BaseModel):
 
 
 class ServerCapabilitiesCompletions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    pass
+
+
+class ServerCapabilitiesExperimentalValue(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     pass
@@ -1777,7 +1834,7 @@ class ServerCapabilities(BaseModel):
     """Present if the server supports argument autocompletion suggestions."""
     completions: ServerCapabilitiesCompletions | None = None
     """Experimental, non-standard capabilities that the server supports."""
-    experimental: Dict[str, Any] | None = None
+    experimental: Dict[str, ServerCapabilitiesExperimentalValue] | None = None
     """Present if the server supports sending log messages to the client."""
     logging: ServerCapabilitiesLogging | None = None
     """Present if the server offers any prompt templates."""
@@ -2092,17 +2149,6 @@ class Notification(BaseModel):
     params: Dict[str, Any] | None = None
 
 
-class NumberSchema(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    default: int | None = None
-    description: str | None = None
-    maximum: int | None = None
-    minimum: int | None = None
-    title: str | None = None
-    type: str
-
-
 class PaginatedRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -2122,28 +2168,6 @@ class PaginatedResult(BaseModel):
     If present, there may be more results available.
     """
     next_cursor: str | None = None
-
-
-class StringSchema(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    default: str | None = None
-    description: str | None = None
-    format: str | None = None
-    max_length: int | None = None
-    min_length: int | None = None
-    title: str | None = None
-    type: str
-
-
-
-"""
-Restricted schema definitions that only allow primitive types
-without nested objects or arrays.
-"""
-
-PrimitiveSchemaDefinition = Union[StringSchema, NumberSchema, BooleanSchema, UntitledSingleSelectEnumSchema, TitledSingleSelectEnumSchema, UntitledMultiSelectEnumSchema, TitledMultiSelectEnumSchema, LegacyTitledEnumSchema]
-
 
 
 class PromptListChangedNotification(BaseModel):

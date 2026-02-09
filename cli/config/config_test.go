@@ -24,11 +24,11 @@ func TestLoad_FullConfig(t *testing.T) {
 	assert.Equal(t, "example.com/uuid", cfg.Golang.FormatMappings["uuid"].Import)
 
 	// Check typescript config
-	require.NotNil(t, cfg.TypeScript)
-	assert.True(t, cfg.TypeScript.NullOptional)
-	assert.True(t, cfg.TypeScript.BrandedPrimitives)
-	require.Len(t, cfg.TypeScript.FormatMappings, 2)
-	assert.Equal(t, "Date", cfg.TypeScript.FormatMappings["date-time"].Type)
+	require.NotNil(t, cfg.Typescript)
+	assert.True(t, *cfg.Typescript.NullOptional)
+	assert.True(t, *cfg.Typescript.BrandedPrimitives)
+	require.Len(t, cfg.Typescript.FormatMappings, 2)
+	assert.Equal(t, "Date", cfg.Typescript.FormatMappings["date-time"].Type)
 }
 
 func TestLoad_GolangOnly(t *testing.T) {
@@ -40,7 +40,7 @@ func TestLoad_GolangOnly(t *testing.T) {
 	assert.Equal(t, "generated", cfg.Golang.Package)
 	assert.Equal(t, "pointer", cfg.Golang.OptionalStyle)
 
-	assert.Nil(t, cfg.TypeScript)
+	assert.Nil(t, cfg.Typescript)
 }
 
 func TestLoad_FileNotFound(t *testing.T) {
@@ -99,7 +99,7 @@ func TestGetFormatMappings_NoMappings(t *testing.T) {
 	mappings := cfg.GetFormatMappings(generators.LanguageGo)
 	assert.Nil(t, mappings)
 
-	// TypeScript config doesn't exist
+	// Typescript config doesn't exist
 	mappings = cfg.GetFormatMappings(generators.LanguageTypeScript)
 	assert.Nil(t, mappings)
 }

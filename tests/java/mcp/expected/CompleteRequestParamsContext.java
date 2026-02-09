@@ -10,5 +10,5 @@ import java.util.Map;
 public class CompleteRequestParamsContext {
     /** Previously-resolved variables in a URI template or prompt. */
     @JsonProperty(value = "arguments")
-    public Map<String, Object> arguments = new HashMap<>();
+    public Map<String, String> arguments = new HashMap<>();
 }

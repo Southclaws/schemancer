@@ -13,7 +13,7 @@ public class GetPromptRequestParams {
     public GetPromptRequestParamsMeta meta;
     /** Arguments to use for templating the prompt. */
     @JsonProperty(value = "arguments")
-    public Map<String, Object> arguments = new HashMap<>();
+    public Map<String, String> arguments = new HashMap<>();
     /** The name of the prompt or prompt template. */
     @JsonProperty(value = "name", required = true)
     public String name;

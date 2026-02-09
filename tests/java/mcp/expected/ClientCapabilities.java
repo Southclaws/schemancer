@@ -13,7 +13,7 @@ public class ClientCapabilities {
     public ClientCapabilitiesElicitation elicitation;
     /** Experimental, non-standard capabilities that the client supports. */
     @JsonProperty(value = "experimental")
-    public Map<String, Object> experimental = new HashMap<>();
+    public Map<String, ClientCapabilitiesExperimentalValue> experimental = new HashMap<>();
     /** Present if the client supports listing roots. */
     @JsonProperty(value = "roots")
     public ClientCapabilitiesRoots roots;

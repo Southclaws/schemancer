@@ -341,6 +341,9 @@ type ClientCapabilitiesElicitation struct {
 	URL  *ClientCapabilitiesElicitationURL  `json:"url,omitempty"`
 }
 
+type ClientCapabilitiesExperimentalValue struct {
+}
+
 // Present if the client supports listing roots.
 type ClientCapabilitiesRoots struct {
 	// Whether the client supports notifications for changes to the roots list.
@@ -416,7 +419,7 @@ type ClientCapabilities struct {
 	// Present if the client supports elicitation from the server.
 	Elicitation *ClientCapabilitiesElicitation `json:"elicitation,omitempty"`
 	// Experimental, non-standard capabilities that the client supports.
-	Experimental map[string]interface{} `json:"experimental,omitempty"`
+	Experimental map[string]ClientCapabilitiesExperimentalValue `json:"experimental,omitempty"`
 	// Present if the client supports listing roots.
 	Roots *ClientCapabilitiesRoots `json:"roots,omitempty"`
 	// Present if the client supports sampling from an LLM.
@@ -511,7 +514,7 @@ type CompleteRequestParamsArgument struct {
 // Additional, optional context for completions
 type CompleteRequestParamsContext struct {
 	// Previously-resolved variables in a URI template or prompt.
-	Arguments map[string]interface{} `json:"arguments,omitempty"`
+	Arguments map[string]string `json:"arguments,omitempty"`
 }
 
 // See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
@@ -550,7 +553,7 @@ type GetPromptRequestParams struct {
 	// See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
 	Meta *GetPromptRequestParamsMeta `json:"_meta,omitempty"`
 	// Arguments to use for templating the prompt.
-	Arguments map[string]interface{} `json:"arguments,omitempty"`
+	Arguments map[string]string `json:"arguments,omitempty"`
 	// The name of the prompt or prompt template.
 	Name string `json:"name"`
 }
@@ -1095,12 +1098,18 @@ type ToolExecution struct {
 	TaskSupport *string `json:"taskSupport,omitempty"`
 }
 
+type ToolInputSchemaPropertiesValue struct {
+}
+
 // A JSON Schema object defining the expected parameters for the tool.
 type ToolInputSchema struct {
-	Schema     *string                `json:"$schema,omitempty"`
-	Properties map[string]interface{} `json:"properties,omitempty"`
-	Required   []string               `json:"required,omitempty"`
-	Type       string                 `json:"type"`
+	Schema     *string                                   `json:"$schema,omitempty"`
+	Properties map[string]ToolInputSchemaPropertiesValue `json:"properties,omitempty"`
+	Required   []string                                  `json:"required,omitempty"`
+	Type       string                                    `json:"type"`
+}
+
+type ToolOutputSchemaPropertiesValue struct {
 }
 
 // An optional JSON Schema object defining the structure of the tool's output returned in
@@ -1109,10 +1118,10 @@ type ToolInputSchema struct {
 // Defaults to JSON Schema 2020-12 when no explicit $schema is provided.
 // Currently restricted to type: "object" at the root level.
 type ToolOutputSchema struct {
-	Schema     *string                `json:"$schema,omitempty"`
-	Properties map[string]interface{} `json:"properties,omitempty"`
-	Required   []string               `json:"required,omitempty"`
-	Type       string                 `json:"type"`
+	Schema     *string                                    `json:"$schema,omitempty"`
+	Properties map[string]ToolOutputSchemaPropertiesValue `json:"properties,omitempty"`
+	Required   []string                                   `json:"required,omitempty"`
+	Type       string                                     `json:"type"`
 }
 
 // Definition for a tool the client can call.
@@ -1230,88 +1239,6 @@ type ElicitRequestFormParamsMeta struct {
 	ProgressToken *ProgressToken `json:"progressToken,omitempty"`
 }
 
-// A restricted subset of JSON Schema.
-// Only top-level properties are allowed, without nesting.
-type ElicitRequestFormParamsRequestedSchema struct {
-	Schema     *string                `json:"$schema,omitempty"`
-	Properties map[string]interface{} `json:"properties"`
-	Required   []string               `json:"required,omitempty"`
-	Type       string                 `json:"type"`
-}
-
-// The parameters for a request to elicit non-sensitive information from the user via a form in the client.
-type ElicitRequestFormParams struct {
-	// See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
-	Meta *ElicitRequestFormParamsMeta `json:"_meta,omitempty"`
-	// The message to present to the user describing what information is being requested.
-	Message string `json:"message"`
-	// The elicitation mode.
-	Mode *string `json:"mode,omitempty"`
-	// A restricted subset of JSON Schema.
-	// Only top-level properties are allowed, without nesting.
-	RequestedSchema ElicitRequestFormParamsRequestedSchema `json:"requestedSchema"`
-	// If specified, the caller is requesting task-augmented execution for this request.
-	// The request will return a CreateTaskResult immediately, and the actual result can be
-	// retrieved later via tasks/result.
-	//
-	// Task augmentation is subject to capability negotiation - receivers MUST declare support
-	// for task augmentation of specific request types in their capabilities.
-	Task *TaskMetadata `json:"task,omitempty"`
-}
-
-// See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
-type ElicitRequestURLParamsMeta struct {
-	// If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications.
-	ProgressToken *ProgressToken `json:"progressToken,omitempty"`
-}
-
-// The parameters for a request to elicit information from the user via a URL in the client.
-type ElicitRequestURLParams struct {
-	// See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
-	Meta *ElicitRequestURLParamsMeta `json:"_meta,omitempty"`
-	// The ID of the elicitation, which must be unique within the context of the server.
-	// The client MUST treat this ID as an opaque value.
-	ElicitationID string `json:"elicitationId"`
-	// The message to present to the user explaining why the interaction is needed.
-	Message string `json:"message"`
-	// The elicitation mode.
-	Mode string `json:"mode"`
-	// If specified, the caller is requesting task-augmented execution for this request.
-	// The request will return a CreateTaskResult immediately, and the actual result can be
-	// retrieved later via tasks/result.
-	//
-	// Task augmentation is subject to capability negotiation - receivers MUST declare support
-	// for task augmentation of specific request types in their capabilities.
-	Task *TaskMetadata `json:"task,omitempty"`
-	// The URL that the user should navigate to.
-	URL url.URL `json:"url"`
-}
-
-// The parameters for a request to elicit additional information from the user via the client.
-type ElicitRequestParams = interface{}
-
-// A request from the server to elicit additional information from the user via the client.
-type ElicitRequest struct {
-	ID      RequestId           `json:"id"`
-	Jsonrpc string              `json:"jsonrpc"`
-	Method  string              `json:"method"`
-	Params  ElicitRequestParams `json:"params"`
-}
-
-type ElicitationCompleteNotificationParams struct {
-	// The ID of the elicitation that completed.
-	ElicitationID string `json:"elicitationId"`
-}
-
-// An optional notification from the server to the client, informing it of a completion of a out-of-band elicitation request.
-type ElicitationCompleteNotification struct {
-	Jsonrpc string                                `json:"jsonrpc"`
-	Method  string                                `json:"method"`
-	Params  ElicitationCompleteNotificationParams `json:"params"`
-}
-
-type EmptyResult = interface{}
-
 // Use TitledSingleSelectEnumSchema instead.
 // This interface will be removed in a future version.
 type LegacyTitledEnumSchema struct {
@@ -1323,6 +1250,25 @@ type LegacyTitledEnumSchema struct {
 	EnumNames []string `json:"enumNames,omitempty"`
 	Title     *string  `json:"title,omitempty"`
 	Type      string   `json:"type"`
+}
+
+type NumberSchema struct {
+	Default     *int    `json:"default,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Maximum     *int    `json:"maximum,omitempty"`
+	Minimum     *int    `json:"minimum,omitempty"`
+	Title       *string `json:"title,omitempty"`
+	Type        string  `json:"type"`
+}
+
+type StringSchema struct {
+	Default     *string `json:"default,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Format      *string `json:"format,omitempty"`
+	MaxLength   *int    `json:"maxLength,omitempty"`
+	MinLength   *int    `json:"minLength,omitempty"`
+	Title       *string `json:"title,omitempty"`
+	Type        string  `json:"type"`
 }
 
 type TitledMultiSelectEnumSchemaItemsAnyOfItem struct {
@@ -1412,6 +1358,92 @@ type UntitledSingleSelectEnumSchema struct {
 	Type  string  `json:"type"`
 }
 
+// Restricted schema definitions that only allow primitive types
+// without nested objects or arrays.
+type PrimitiveSchemaDefinition = interface{}
+
+// A restricted subset of JSON Schema.
+// Only top-level properties are allowed, without nesting.
+type ElicitRequestFormParamsRequestedSchema struct {
+	Schema     *string                              `json:"$schema,omitempty"`
+	Properties map[string]PrimitiveSchemaDefinition `json:"properties"`
+	Required   []string                             `json:"required,omitempty"`
+	Type       string                               `json:"type"`
+}
+
+// The parameters for a request to elicit non-sensitive information from the user via a form in the client.
+type ElicitRequestFormParams struct {
+	// See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
+	Meta *ElicitRequestFormParamsMeta `json:"_meta,omitempty"`
+	// The message to present to the user describing what information is being requested.
+	Message string `json:"message"`
+	// The elicitation mode.
+	Mode *string `json:"mode,omitempty"`
+	// A restricted subset of JSON Schema.
+	// Only top-level properties are allowed, without nesting.
+	RequestedSchema ElicitRequestFormParamsRequestedSchema `json:"requestedSchema"`
+	// If specified, the caller is requesting task-augmented execution for this request.
+	// The request will return a CreateTaskResult immediately, and the actual result can be
+	// retrieved later via tasks/result.
+	//
+	// Task augmentation is subject to capability negotiation - receivers MUST declare support
+	// for task augmentation of specific request types in their capabilities.
+	Task *TaskMetadata `json:"task,omitempty"`
+}
+
+// See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
+type ElicitRequestURLParamsMeta struct {
+	// If specified, the caller is requesting out-of-band progress notifications for this request (as represented by notifications/progress). The value of this parameter is an opaque token that will be attached to any subsequent notifications. The receiver is not obligated to provide these notifications.
+	ProgressToken *ProgressToken `json:"progressToken,omitempty"`
+}
+
+// The parameters for a request to elicit information from the user via a URL in the client.
+type ElicitRequestURLParams struct {
+	// See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
+	Meta *ElicitRequestURLParamsMeta `json:"_meta,omitempty"`
+	// The ID of the elicitation, which must be unique within the context of the server.
+	// The client MUST treat this ID as an opaque value.
+	ElicitationID string `json:"elicitationId"`
+	// The message to present to the user explaining why the interaction is needed.
+	Message string `json:"message"`
+	// The elicitation mode.
+	Mode string `json:"mode"`
+	// If specified, the caller is requesting task-augmented execution for this request.
+	// The request will return a CreateTaskResult immediately, and the actual result can be
+	// retrieved later via tasks/result.
+	//
+	// Task augmentation is subject to capability negotiation - receivers MUST declare support
+	// for task augmentation of specific request types in their capabilities.
+	Task *TaskMetadata `json:"task,omitempty"`
+	// The URL that the user should navigate to.
+	URL url.URL `json:"url"`
+}
+
+// The parameters for a request to elicit additional information from the user via the client.
+type ElicitRequestParams = interface{}
+
+// A request from the server to elicit additional information from the user via the client.
+type ElicitRequest struct {
+	ID      RequestId           `json:"id"`
+	Jsonrpc string              `json:"jsonrpc"`
+	Method  string              `json:"method"`
+	Params  ElicitRequestParams `json:"params"`
+}
+
+type ElicitationCompleteNotificationParams struct {
+	// The ID of the elicitation that completed.
+	ElicitationID string `json:"elicitationId"`
+}
+
+// An optional notification from the server to the client, informing it of a completion of a out-of-band elicitation request.
+type ElicitationCompleteNotification struct {
+	Jsonrpc string                                `json:"jsonrpc"`
+	Method  string                                `json:"method"`
+	Params  ElicitationCompleteNotificationParams `json:"params"`
+}
+
+type EmptyResult = interface{}
+
 type EnumSchema = interface{}
 
 type Error struct {
@@ -1457,6 +1489,9 @@ type Icons struct {
 
 // Present if the server supports argument autocompletion suggestions.
 type ServerCapabilitiesCompletions struct {
+}
+
+type ServerCapabilitiesExperimentalValue struct {
 }
 
 // Present if the server supports sending log messages to the client.
@@ -1522,7 +1557,7 @@ type ServerCapabilities struct {
 	// Present if the server supports argument autocompletion suggestions.
 	Completions *ServerCapabilitiesCompletions `json:"completions,omitempty"`
 	// Experimental, non-standard capabilities that the server supports.
-	Experimental map[string]interface{} `json:"experimental,omitempty"`
+	Experimental map[string]ServerCapabilitiesExperimentalValue `json:"experimental,omitempty"`
 	// Present if the server supports sending log messages to the client.
 	Logging *ServerCapabilitiesLogging `json:"logging,omitempty"`
 	// Present if the server offers any prompt templates.
@@ -1784,15 +1819,6 @@ type Notification struct {
 	Params map[string]interface{} `json:"params,omitempty"`
 }
 
-type NumberSchema struct {
-	Default     *int    `json:"default,omitempty"`
-	Description *string `json:"description,omitempty"`
-	Maximum     *int    `json:"maximum,omitempty"`
-	Minimum     *int    `json:"minimum,omitempty"`
-	Title       *string `json:"title,omitempty"`
-	Type        string  `json:"type"`
-}
-
 type PaginatedRequest struct {
 	ID      RequestId               `json:"id"`
 	Jsonrpc string                  `json:"jsonrpc"`
@@ -1807,20 +1833,6 @@ type PaginatedResult struct {
 	// If present, there may be more results available.
 	NextCursor *string `json:"nextCursor,omitempty"`
 }
-
-type StringSchema struct {
-	Default     *string `json:"default,omitempty"`
-	Description *string `json:"description,omitempty"`
-	Format      *string `json:"format,omitempty"`
-	MaxLength   *int    `json:"maxLength,omitempty"`
-	MinLength   *int    `json:"minLength,omitempty"`
-	Title       *string `json:"title,omitempty"`
-	Type        string  `json:"type"`
-}
-
-// Restricted schema definitions that only allow primitive types
-// without nested objects or arrays.
-type PrimitiveSchemaDefinition = interface{}
 
 // An optional notification from the server to the client, informing it that the list of prompts it offers has changed. This may be issued by servers without any previous subscription from the client.
 type PromptListChangedNotification struct {
