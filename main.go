@@ -173,7 +173,7 @@ func getGeneratorOptions(cmd *cobra.Command, cfg *config.Config, language string
 	case "typescript":
 		// Resolve null_optional: CLI flag > config > default
 		nullOpt := false
-		if cfg != nil && cfg.Typescript != nil {
+		if cfg != nil && cfg.Typescript != nil && cfg.Typescript.NullOptional != nil {
 			nullOpt = *cfg.Typescript.NullOptional
 		}
 		if cmd.Flags().Changed("null-optional") {
@@ -183,7 +183,7 @@ func getGeneratorOptions(cmd *cobra.Command, cfg *config.Config, language string
 
 		// Resolve branded_primitives: CLI flag > config > default
 		branded := false
-		if cfg != nil && cfg.Typescript != nil {
+		if cfg != nil && cfg.Typescript != nil && cfg.Typescript.BrandedPrimitives != nil {
 			branded = *cfg.Typescript.BrandedPrimitives
 		}
 		if cmd.Flags().Changed("branded-primitives") {
