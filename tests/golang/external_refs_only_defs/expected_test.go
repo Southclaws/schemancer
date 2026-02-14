@@ -14,6 +14,12 @@ const (
 	EventTypeThreadUpdated     EventType = "thread_updated"
 )
 
+var EventTypeValues = []EventType{
+	EventTypeThreadPublished,
+	EventTypeThreadUnpublished,
+	EventTypeThreadUpdated,
+}
+
 type EventPayload struct {
 	Data      map[string]interface{} `json:"data"`
 	EventType EventType              `json:"event_type"`

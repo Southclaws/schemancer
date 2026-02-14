@@ -10,6 +10,14 @@ const (
 	HttpStatus500 HttpStatus = 500
 )
 
+var HttpStatusValues = []HttpStatus{
+	HttpStatus200,
+	HttpStatus201,
+	HttpStatus400,
+	HttpStatus404,
+	HttpStatus500,
+}
+
 type Priority int
 
 const (
@@ -17,6 +25,12 @@ const (
 	Priority2 Priority = 2
 	Priority3 Priority = 3
 )
+
+var PriorityValues = []Priority{
+	Priority1,
+	Priority2,
+	Priority3,
+}
 
 type Response struct {
 	Priority *Priority  `json:"priority,omitempty"`

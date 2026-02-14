@@ -12,6 +12,11 @@ const (
 	RoleUser      Role = "user"
 )
 
+var RoleValues = []Role{
+	RoleAssistant,
+	RoleUser,
+}
+
 // Optional annotations for the client. The client can use annotations to inform how objects are used or displayed
 type Annotations struct {
 	// Describes who the intended audience of this object or data is.
@@ -280,6 +285,14 @@ const (
 	TaskStatusInputRequired TaskStatus = "input_required"
 	TaskStatusWorking       TaskStatus = "working"
 )
+
+var TaskStatusValues = []TaskStatus{
+	TaskStatusCancelled,
+	TaskStatusCompleted,
+	TaskStatusFailed,
+	TaskStatusInputRequired,
+	TaskStatusWorking,
+}
 
 // The response to a tasks/cancel request.
 type CancelTaskResult struct {
@@ -766,6 +779,17 @@ const (
 	LoggingLevelNotice    LoggingLevel = "notice"
 	LoggingLevelWarning   LoggingLevel = "warning"
 )
+
+var LoggingLevelValues = []LoggingLevel{
+	LoggingLevelAlert,
+	LoggingLevelCritical,
+	LoggingLevelDebug,
+	LoggingLevelEmergency,
+	LoggingLevelError,
+	LoggingLevelInfo,
+	LoggingLevelNotice,
+	LoggingLevelWarning,
+}
 
 // See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
 type SetLevelRequestParamsMeta struct {

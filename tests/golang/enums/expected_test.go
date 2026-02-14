@@ -12,6 +12,16 @@ const (
 	HttpMethodOptions HttpMethod = "OPTIONS"
 )
 
+var HttpMethodValues = []HttpMethod{
+	HttpMethodGet,
+	HttpMethodPost,
+	HttpMethodPut,
+	HttpMethodDelete,
+	HttpMethodPatch,
+	HttpMethodHead,
+	HttpMethodOptions,
+}
+
 type ApiRequest struct {
 	Body   *string    `json:"body,omitempty"`
 	Method HttpMethod `json:"method"`
@@ -27,6 +37,13 @@ const (
 	ColorYellow Color = "yellow"
 )
 
+var ColorValues = []Color{
+	ColorRed,
+	ColorGreen,
+	ColorBlue,
+	ColorYellow,
+}
+
 type Priority string
 
 const (
@@ -35,6 +52,13 @@ const (
 	PriorityHigh     Priority = "high"
 	PriorityCritical Priority = "critical"
 )
+
+var PriorityValues = []Priority{
+	PriorityLow,
+	PriorityMedium,
+	PriorityHigh,
+	PriorityCritical,
+}
 
 type Status string
 
@@ -45,6 +69,14 @@ const (
 	StatusFailed     Status = "failed"
 	StatusCancelled  Status = "cancelled"
 )
+
+var StatusValues = []Status{
+	StatusPending,
+	StatusInProgress,
+	StatusCompleted,
+	StatusFailed,
+	StatusCancelled,
+}
 
 type Task struct {
 	Color    *Color    `json:"color,omitempty"`

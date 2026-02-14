@@ -378,6 +378,14 @@ const (
 {{- end}}
 {{- end}}
 )
+
+var {{.Name}}Values = []{{.Name}}{
+{{- range .EnumValues}}
+{{- if not .IsNull}}
+	{{toEnumKey $.Name .}},
+{{- end}}
+{{- end}}
+}
 {{- else}}
 type {{.Name}} string
 
@@ -388,6 +396,14 @@ const (
 {{- end}}
 {{- end}}
 )
+
+var {{.Name}}Values = []{{.Name}}{
+{{- range .EnumValues}}
+{{- if not .IsNull}}
+	{{toEnumKey $.Name .}},
+{{- end}}
+{{- end}}
+}
 {{- end}}
 {{end}}
 

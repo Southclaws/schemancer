@@ -31,4 +31,8 @@ const (
 	SingleEnumOnlyValue SingleEnum = "only_value"
 )
 
+var SingleEnumValues = []SingleEnum{
+	SingleEnumOnlyValue,
+}
+
 type TrueSchema = interface{}

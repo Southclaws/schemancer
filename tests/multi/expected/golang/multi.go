@@ -18,6 +18,12 @@ const (
 	StatusPending  Status = "pending"
 )
 
+var StatusValues = []Status{
+	StatusActive,
+	StatusInactive,
+	StatusPending,
+}
+
 type Person struct {
 	Address *Address  `json:"address,omitempty"`
 	Age     *int      `json:"age,omitempty"`
