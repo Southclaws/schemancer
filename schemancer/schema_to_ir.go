@@ -885,11 +885,20 @@ func extractTypeDependencies(t ir.IRType, typeMap map[string]ir.IRType) map[stri
 		extractFromRef(t.Element)
 	}
 
+	// Extract from base type (allOf $ref inheritance)
+	if t.BaseType != "" {
+		deps[t.BaseType] = true
+	}
+
 	// Extract from discriminated union variants
 	if t.Union != nil {
 		for _, v := range t.Union.Variants {
 			for _, f := range v.Type.Fields {
 				extractFromRef(&f.Type)
+			}
+			// Also depend on the variant's base type
+			if v.Type.BaseType != "" {
+				deps[v.Type.BaseType] = true
 			}
 		}
 	}

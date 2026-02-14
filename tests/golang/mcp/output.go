@@ -265,6 +265,11 @@ type CancelTaskRequest struct {
 	Params  CancelTaskRequestParams `json:"params"`
 }
 
+type Result struct {
+	// See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
+	Meta map[string]interface{} `json:"_meta,omitempty"`
+}
+
 // The status of a task.
 type TaskStatus string
 
@@ -952,11 +957,6 @@ type ListTasksResult struct {
 	// If present, there may be more results available.
 	NextCursor *string `json:"nextCursor,omitempty"`
 	Tasks      []Task  `json:"tasks"`
-}
-
-type Result struct {
-	// See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
-	Meta map[string]interface{} `json:"_meta,omitempty"`
 }
 
 type ClientResult = interface{}

@@ -257,6 +257,11 @@ export interface CancelTaskRequest {
   params: CancelTaskRequestParams;
 }
 
+export interface Result {
+  // See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
+  _meta?: Record<string, unknown>;
+}
+
 
 // The status of a task.
 export type TaskStatus =
@@ -940,11 +945,6 @@ export interface ListTasksResult {
   // If present, there may be more results available.
   nextCursor?: string;
   tasks: Task[];
-}
-
-export interface Result {
-  // See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage.
-  _meta?: Record<string, unknown>;
 }
 
 export type ClientResult = Result | GetTaskResult | GetTaskPayloadResult | CancelTaskResult | ListTasksResult | CreateMessageResult | ListRootsResult | ElicitResult;

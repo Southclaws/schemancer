@@ -318,6 +318,13 @@ class CancelTaskRequest(BaseModel):
     params: CancelTaskRequestParams
 
 
+class Result(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    """See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage."""
+    meta: Dict[str, Any] | None = None
+
+
 """The status of a task."""
 
 class TaskStatus(str, Enum):
@@ -1108,13 +1115,6 @@ class ListTasksResult(BaseModel):
     """
     next_cursor: str | None = None
     tasks: List[Task]
-
-
-class Result(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    """See [General fields: `_meta`](/specification/2025-11-25/basic/index#meta) for notes on `_meta` usage."""
-    meta: Dict[str, Any] | None = None
 
 
 

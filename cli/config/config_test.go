@@ -17,8 +17,8 @@ func TestLoad_FullConfig(t *testing.T) {
 
 	// Check golang config
 	require.NotNil(t, cfg.Golang)
-	assert.Equal(t, "mymodels", cfg.Golang.Package)
-	assert.Equal(t, "opt", cfg.Golang.OptionalStyle)
+	assert.Equal(t, "mymodels", *cfg.Golang.Package)
+	assert.Equal(t, "opt", *cfg.Golang.OptionalStyle)
 	require.Len(t, cfg.Golang.FormatMappings, 2)
 	assert.Equal(t, "CustomUUID", cfg.Golang.FormatMappings["uuid"].Type)
 	assert.Equal(t, "example.com/uuid", cfg.Golang.FormatMappings["uuid"].Import)
@@ -37,8 +37,8 @@ func TestLoad_GolangOnly(t *testing.T) {
 	require.NotNil(t, cfg)
 
 	require.NotNil(t, cfg.Golang)
-	assert.Equal(t, "generated", cfg.Golang.Package)
-	assert.Equal(t, "pointer", cfg.Golang.OptionalStyle)
+	assert.Equal(t, "generated", *cfg.Golang.Package)
+	assert.Equal(t, "pointer", *cfg.Golang.OptionalStyle)
 
 	assert.Nil(t, cfg.Typescript)
 }

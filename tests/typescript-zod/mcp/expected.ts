@@ -190,6 +190,11 @@ export const CancelTaskRequestSchema = z.object({
 });
 export type CancelTaskRequest = z.infer<typeof CancelTaskRequestSchema>;
 
+export const ResultSchema = z.object({
+  _meta: z.record(z.string(), z.unknown()).optional(),
+});
+export type Result = z.infer<typeof ResultSchema>;
+
 
 // The status of a task.
 export const TaskStatusSchema = z.enum(["cancelled", "completed", "failed", "input_required", "working"]);
@@ -866,11 +871,6 @@ export const ListTasksResultSchema = z.object({
   tasks: z.array(TaskSchema),
 });
 export type ListTasksResult = z.infer<typeof ListTasksResultSchema>;
-
-export const ResultSchema = z.object({
-  _meta: z.record(z.string(), z.unknown()).optional(),
-});
-export type Result = z.infer<typeof ResultSchema>;
 
 export const ClientResultSchema = z.union([
   ResultSchema,
