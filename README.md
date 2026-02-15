@@ -1,5 +1,7 @@
 # schemancer
 
+> Used in production at [Storyden](https://github.com/Southclaws/storyden) - an open source forum+wiki written in Go!
+
 **JSON Schema Code Generator** — Generate type-safe code from JSON Schema definitions.
 
 ## Features
@@ -8,6 +10,12 @@
 - **Discriminated unions**: First-class support for tagged unions with type guards and pattern matching
 - **Format mappings**: Configurable type mappings for `uuid`, `date-time`, `email`, and other formats
 - **Config file**: Generate multiple languages from a single schema with `schemancer.yaml`
+
+## Why?
+
+I use a ton of code-generation in my workflows, OpenAPI, JSONSchema, Protocol Buffers, etc. I found a lot of the JSONSchema tooling to lack support for a tool I reach for a lot while defining data models: discriminated unions. I also wanted a consistent cross-language tool and output style, Schemancer supports 4 languages.
+
+[More details on why, and how this codebase is maintained.](#more-on-why)
 
 ## Installation
 
@@ -296,3 +304,15 @@ python:
       type: "EmailStr"
       import: "pydantic"
 ```
+
+## More on Why
+
+While working across many languages that often need to talk to each other over RPC-like transports or perform LLM assisted tool-calls, I often reach for JSON Schema as its a lingua-franca of data structure modelling.
+
+I built this tool primarily to serve the plugin system (which heavily uses JSON-RPC defined in JSON Schema) and the AI Agents features of [Storyden](https://github.com/Southclaws/storyden) which supports plugins written in many languages. So Schemancer was born to easily build SDKs in Go, Python, TypeScript and Java.
+
+This codebase is also somewhat of an experiment of code-generation tooling for LLMs. I've found agentic coding tools really shine when you provide an input and a desired output. As such, **I have absolutely no clue how this code works**, I simply provided the input schemas and desired output in tests, the clanker did the rest. The only input I had was to nudge the agent to use an _intermediate representation_ (`schemancer/ir/ir.go`) much like compilers do, to simplify the architecture. Most of the logic is there then once a schema is in IR format, it's fairly trivial to pipe into a template engine to generate code for each language.
+
+_Using_ generated code is also a brilliant grounding tool for working with agents. I frequently write schemas by hand to build the data model I want then use agentic coding tools to utilise the generated code to achieve the goal I want. I've found this workflow to be very effective in enforcing domain boundaries and invariants.
+
+If you would like a new language or a particular feature, simply provide your example schema and your desired output code, the clanker will do the rest.
