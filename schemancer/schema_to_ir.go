@@ -112,6 +112,83 @@ func SchemaToIR(schema *jsonschema.Schema) (*ir.IR, error) {
 			}
 		}
 
+		// First-and-a-half pass: detect allOf schemas that compose a base struct with a
+		// discriminated union. E.g.:
+		//   PluginConfigurationFieldSchema:
+		//     allOf:
+		//       - $ref: "#/$defs/PluginConfigurationFieldBase"   # plain struct
+		//       - $ref: "#/$defs/PluginConfigurationField"        # discriminated union
+		//
+		// In this case we merge the base fields into each union variant and make the
+		// allOf schema an alias for the union wrapper.
+		for _, name := range names {
+			if usedInUnions[name] {
+				continue
+			}
+			def := schema.Defs[name]
+			if len(def.AllOf) == 0 {
+				continue
+			}
+
+			// Resolve all allOf members and separate union refs from base refs
+			var unionRefName string
+			var baseSchemas []*jsonschema.Schema
+
+			for _, part := range def.AllOf {
+				if part.Ref == "" {
+					continue
+				}
+				refName := refToTypeName(part.Ref)
+				refSchema := merge.ResolveSchema(schema, part)
+				if refSchema == nil {
+					continue
+				}
+				// Check whether the resolved ref is a discriminated union
+				wrapperSchema := &jsonschema.Schema{
+					OneOf: refSchema.OneOf,
+					Defs:  schema.Defs,
+					Extra: schema.Extra,
+				}
+				u, _ := detect.DiscriminatedUnion(wrapperSchema)
+				if u != nil {
+					unionRefName = refName
+				} else {
+					baseSchemas = append(baseSchemas, refSchema)
+				}
+			}
+
+			if unionRefName == "" {
+				continue
+			}
+
+			// Collect fields from all base schemas
+			baseFields := collectBaseFields(schema, baseSchemas, &result.Types)
+
+			// Find the already-generated union IR type and merge base fields into its variants
+			mergeBaseFieldsIntoUnion(unionRefName, baseFields, result.Types)
+
+			// Mark base schemas as used so they are not emitted as standalone types
+			for _, part := range def.AllOf {
+				if part.Ref == "" {
+					continue
+				}
+				refName := refToTypeName(part.Ref)
+				if refName != unionRefName {
+					usedInUnions[refName] = true
+				}
+			}
+
+			// Make this schema an alias for the union wrapper
+			usedInUnions[name] = true
+			result.Types = append(result.Types, ir.IRType{
+				Name: symbolName(name),
+				Kind: ir.IRKindAlias,
+				Element: &ir.IRTypeRef{
+					Name: unionRefName,
+				},
+			})
+		}
+
 		// Second pass: process remaining types that aren't part of a union
 		for _, name := range names {
 			// Skip types that are already part of a discriminated union
@@ -911,6 +988,94 @@ func extractTypeDependencies(t ir.IRType, typeMap map[string]ir.IRType) map[stri
 	}
 
 	return deps
+}
+
+// collectBaseFields converts a list of resolved base schemas into IR fields,
+// suitable for merging into discriminated union variant structs.
+func collectBaseFields(root *jsonschema.Schema, baseSchemas []*jsonschema.Schema, inlineTypes *[]ir.IRType) []ir.IRField {
+	var fields []ir.IRField
+	seen := make(map[string]bool)
+
+	for _, base := range baseSchemas {
+		// Recursively resolve allOf within each base schema
+		resolved := merge.AllOf(root, base)
+		if resolved == nil {
+			resolved = base
+		}
+		if resolved.Properties == nil {
+			continue
+		}
+
+		requiredSet := make(map[string]bool)
+		for _, r := range resolved.Required {
+			requiredSet[r] = true
+		}
+
+		propNames := make([]string, 0, len(resolved.Properties))
+		for propName := range resolved.Properties {
+			propNames = append(propNames, propName)
+		}
+		sort.Strings(propNames)
+
+		for _, propName := range propNames {
+			if seen[propName] {
+				continue
+			}
+			seen[propName] = true
+
+			propSchema := resolved.Properties[propName]
+			fieldName := symbolName(propName)
+			var fieldDesc string
+			if propSchema != nil {
+				fieldDesc = propSchema.Description
+			}
+			fields = append(fields, ir.IRField{
+				Name:        fieldName,
+				Description: fieldDesc,
+				JSONName:    propName,
+				Type:        schemaToIRTypeRefWithContext(root, propSchema, fieldName, inlineTypes),
+				Required:    requiredSet[propName],
+			})
+		}
+	}
+
+	return fields
+}
+
+// mergeBaseFieldsIntoUnion finds the already-generated discriminated union IR type by name
+// and prepends baseFields to each variant's field list (if not already present).
+func mergeBaseFieldsIntoUnion(unionName string, baseFields []ir.IRField, types []ir.IRType) {
+	if len(baseFields) == 0 {
+		return
+	}
+	for i, t := range types {
+		if t.Kind != ir.IRKindDiscriminatedUnion || t.Name != unionName {
+			continue
+		}
+		if t.Union == nil {
+			continue
+		}
+		for j := range t.Union.Variants {
+			existing := make(map[string]bool)
+			for _, f := range t.Union.Variants[j].Type.Fields {
+				existing[f.JSONName] = true
+			}
+			// Prepend base fields that are not already present
+			var merged []ir.IRField
+			for _, bf := range baseFields {
+				if !existing[bf.JSONName] {
+					merged = append(merged, bf)
+				}
+			}
+			merged = append(merged, t.Union.Variants[j].Type.Fields...)
+			// Re-sort by name for deterministic output
+			sort.Slice(merged, func(a, b int) bool {
+				return merged[a].Name < merged[b].Name
+			})
+			types[i].Union.Variants[j].Type.Fields = merged
+		}
+		return
+	}
 }
 
 // parseExtraSchema converts a value from Schema.Extra into a jsonschema.Schema.
