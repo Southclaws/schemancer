@@ -8,6 +8,10 @@
 
 - **Multi-language support**: Go, TypeScript, (Types, Zod), Java, Python (Pydantic v2)
 - **Discriminated unions**: First-class support for tagged unions with type guards and pattern matching
+- **`allOf` base-type composition**: Base struct fields are merged into each union variant; a composing schema becomes a transparent type alias
+- **Inheritance via `allOf`**: Shared base types in discriminated union variants generate proper class inheritance in Python and base structs in Go/Java
+- **Enum value slices**: Go generates a `var FooValues = []Foo{...}` slice alongside every string/integer enum
+- **Typed additional properties**: `additionalProperties` with a schema generates `map[string]T` instead of `map[string]any`
 - **Format mappings**: Configurable type mappings for `uuid`, `date-time`, `email`, and other formats
 - **Config file**: Generate multiple languages from a single schema with `schemancer.yaml`
 
@@ -242,6 +246,64 @@ func (CreatedEvent) isEvent() {}
 public sealed interface Event permits CreatedEvent, UpdatedEvent, DeletedEvent {
     String type();
 }
+```
+
+## allOf Composition with Unions
+
+When a schema composes a base struct with a discriminated union via `allOf`, the base fields are merged into every union variant and the composing schema becomes a transparent alias:
+
+```yaml
+$defs:
+  PluginConfigurationFieldSchema:
+    allOf:
+      - $ref: "#/$defs/PluginConfigurationFieldBase" # shared fields
+      - $ref: "#/$defs/PluginConfigurationField" # discriminated union
+
+  PluginConfigurationFieldBase:
+    type: object
+    properties:
+      id: { type: string }
+      label: { type: string }
+
+  PluginConfigurationField:
+    oneOf:
+      - $ref: "#/$defs/PluginConfigurationFieldString"
+      - $ref: "#/$defs/PluginConfigurationFieldNumber"
+
+  PluginConfigurationFieldString:
+    type: object
+    required: [type]
+    properties:
+      type: { type: string, const: string }
+      default: { type: string }
+
+  PluginConfigurationFieldNumber:
+    type: object
+    required: [type]
+    properties:
+      type: { type: string, const: number }
+      default: { type: number }
+```
+
+Generated Go — base fields are merged into each variant, and the composing schema becomes an alias:
+
+```go
+type PluginConfigurationFieldString struct {
+    Default     *string `json:"default,omitempty"`
+    ID          *string `json:"id,omitempty"`
+    Label       *string `json:"label,omitempty"`
+    Type        string  `json:"type"`
+}
+
+type PluginConfigurationFieldNumber struct {
+    Default     *float64 `json:"default,omitempty"`
+    ID          *string  `json:"id,omitempty"`
+    Label       *string  `json:"label,omitempty"`
+    Type        string   `json:"type"`
+}
+
+// Transparent alias — PluginConfigurationFieldSchema IS PluginConfigurationField
+type PluginConfigurationFieldSchema = PluginConfigurationField
 ```
 
 ## Configuration Options
