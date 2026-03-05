@@ -10,7 +10,7 @@ import java.util.List;
 public class TitledSingleSelectEnumSchema {
     /** Optional default value. */
     @JsonProperty(value = "default")
-    public String default;
+    public String default_;
     /** Optional description for the enum field. */
     @JsonProperty(value = "description")
     public String description;

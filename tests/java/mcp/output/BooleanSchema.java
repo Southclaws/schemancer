@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BooleanSchema {
     @JsonProperty(value = "default")
-    public Boolean default;
+    public Boolean default_;
     @JsonProperty(value = "description")
     public String description;
     @JsonProperty(value = "title")
