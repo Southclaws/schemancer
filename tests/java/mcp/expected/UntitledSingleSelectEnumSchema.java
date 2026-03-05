@@ -10,13 +10,13 @@ import java.util.List;
 public class UntitledSingleSelectEnumSchema {
     /** Optional default value. */
     @JsonProperty(value = "default")
-    public String default;
+    public String default_;
     /** Optional description for the enum field. */
     @JsonProperty(value = "description")
     public String description;
     /** Array of enum values to choose from. */
     @JsonProperty(value = "enum", required = true)
-    public List<String> enum = new ArrayList<>();
+    public List<String> enum_ = new ArrayList<>();
     /** Optional title for the enum field. */
     @JsonProperty(value = "title")
     public String title;

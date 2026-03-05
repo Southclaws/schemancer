@@ -10,7 +10,7 @@ import java.util.List;
 public class TitledMultiSelectEnumSchema {
     /** Optional default value. */
     @JsonProperty(value = "default")
-    public List<String> default = new ArrayList<>();
+    public List<String> default_ = new ArrayList<>();
     /** Optional description for the enum field. */
     @JsonProperty(value = "description")
     public String description;
