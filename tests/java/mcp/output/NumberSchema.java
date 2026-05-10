@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class NumberSchema {
     @JsonProperty(value = "default")
-    public Integer default;
+    public Integer default_;
     @JsonProperty(value = "description")
     public String description;
     @JsonProperty(value = "maximum")

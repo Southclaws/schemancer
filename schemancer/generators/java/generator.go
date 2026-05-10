@@ -12,6 +12,29 @@ import (
 	"github.com/Southclaws/schemancer/schemancer/ir"
 )
 
+// javaReservedWords contains all Java language keywords that cannot be used as identifiers.
+var javaReservedWords = map[string]bool{
+	"abstract": true, "assert": true, "boolean": true, "break": true,
+	"byte": true, "case": true, "catch": true, "char": true,
+	"class": true, "const": true, "continue": true, "default": true,
+	"do": true, "double": true, "else": true, "enum": true,
+	"extends": true, "final": true, "finally": true, "float": true,
+	"for": true, "goto": true, "if": true, "implements": true,
+	"import": true, "instanceof": true, "int": true, "interface": true,
+	"long": true, "native": true, "new": true, "package": true,
+	"private": true, "protected": true, "public": true, "return": true,
+	"short": true, "static": true, "strictfp": true, "super": true,
+	"switch": true, "synchronized": true, "this": true, "throw": true,
+	"throws": true, "transient": true, "try": true, "void": true,
+	"volatile": true, "while": true,
+}
+
+// javaConflictingGetters contains getter method names that conflict with
+// methods on java.lang.Object and would cause compilation errors.
+var javaConflictingGetters = map[string]bool{
+	"getClass": true,
+}
+
 // DefaultFormatMappings provides sensible defaults for JSON Schema formats in Java
 var DefaultFormatMappings = map[ir.IRFormat]generators.FormatTypeMapping{
 	ir.IRFormatByte:     {Type: "byte[]"},
@@ -535,15 +558,23 @@ func makeJavaDefaultFunc() func(ir.IRField) string {
 	}
 }
 
-// makeJavaFieldNameFunc returns a template function that resolves the Java field name.
-// Uses x-java-name extension if present, otherwise falls back to camelCase.
-func makeJavaFieldNameFunc() func(ir.IRField) string {
-	return func(field ir.IRField) string {
-		if name, ok := field.Extensions["x-java-name"]; ok {
-			return name
-		}
-		return casing.ToCamelCase(field.Name)
+// safeJavaFieldName resolves the Java field name for a field.
+// Uses x-java-name extension if present, otherwise falls back to camelCase
+// with reserved word escaping (appends _ suffix).
+func safeJavaFieldName(field ir.IRField) string {
+	if name, ok := field.Extensions["x-java-name"]; ok {
+		return name
 	}
+	name := casing.ToCamelCase(field.Name)
+	if javaReservedWords[name] {
+		return name + "_"
+	}
+	return name
+}
+
+// makeJavaFieldNameFunc returns a template function that resolves the Java field name.
+func makeJavaFieldNameFunc() func(ir.IRField) string {
+	return safeJavaFieldName
 }
 
 // makeJavaConstructorFunc returns a template function that generates a no-arg constructor
@@ -565,10 +596,7 @@ func makeJavaConstructorFunc(typeKinds map[string]ir.IRTypeKind) func(ir.IRType)
 		var sb strings.Builder
 		sb.WriteString("\n\n    public " + t.Name + "() {\n")
 		for _, f := range refs {
-			fieldName := f.Extensions["x-java-name"]
-			if fieldName == "" {
-				fieldName = casing.ToCamelCase(f.Name)
-			}
+			fieldName := safeJavaFieldName(f)
 			sb.WriteString("        this." + fieldName + " = new " + f.Type.Name + "();\n")
 		}
 		sb.WriteString("    }")
@@ -580,17 +608,18 @@ func makeJavaConstructorFunc(typeKinds map[string]ir.IRTypeKind) func(ir.IRType)
 func makeJavaGetterFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapping) func(ir.IRField) string {
 	javaType := makeJavaTypeFunc(formatMappings)
 	return func(field ir.IRField) string {
-		fieldName := field.Extensions["x-java-name"]
-		if fieldName == "" {
-			fieldName = casing.ToCamelCase(field.Name)
-		}
+		fieldName := safeJavaFieldName(field)
 		typeName := javaType(&field.Type, field.Required)
 		pascalName := casing.ToPascalCase(field.Name)
 		prefix := "get"
 		if typeName == "boolean" || typeName == "Boolean" {
 			prefix = "is"
 		}
-		return fmt.Sprintf("    public %s %s%s() {\n        return %s;\n    }", typeName, prefix, pascalName, fieldName)
+		methodName := prefix + pascalName
+		if javaConflictingGetters[methodName] {
+			methodName = methodName + "_"
+		}
+		return fmt.Sprintf("    public %s %s() {\n        return %s;\n    }", typeName, methodName, fieldName)
 	}
 }
 
@@ -598,13 +627,14 @@ func makeJavaGetterFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapp
 func makeJavaSetterFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapping) func(ir.IRField) string {
 	javaType := makeJavaTypeFunc(formatMappings)
 	return func(field ir.IRField) string {
-		fieldName := field.Extensions["x-java-name"]
-		if fieldName == "" {
-			fieldName = casing.ToCamelCase(field.Name)
-		}
+		fieldName := safeJavaFieldName(field)
 		typeName := javaType(&field.Type, field.Required)
 		pascalName := casing.ToPascalCase(field.Name)
-		return fmt.Sprintf("    public void set%s(%s %s) {\n        this.%s = %s;\n    }", pascalName, typeName, fieldName, fieldName, fieldName)
+		setterName := "set" + pascalName
+		if javaConflictingGetters["get"+pascalName] {
+			setterName = setterName + "_"
+		}
+		return fmt.Sprintf("    public void %s(%s %s) {\n        this.%s = %s;\n    }", setterName, typeName, fieldName, fieldName, fieldName)
 	}
 }
 
@@ -740,7 +770,7 @@ public sealed interface {{.Name}} permits {{range $i, $v := .Union.Variants}}{{i
 @JsonTypeName("{{.ConstValue}}")
 public record {{.Name}}(
     @JsonProperty(value = "{{$.Union.DiscriminatorJSON}}") String {{camel $.Union.DiscriminatorField}}{{range .Type.Fields}}{{if ne .JSONName $.Union.DiscriminatorJSON}},
-    @JsonProperty(value = "{{.JSONName}}"{{if .Required}}, required = true{{end}}) {{javaType .Type .Required}} {{camel .Name}}{{end}}{{end}}
+    @JsonProperty(value = "{{.JSONName}}"{{if .Required}}, required = true{{end}}) {{javaType .Type .Required}} {{javaFieldName .}}{{end}}{{end}}
 ) implements {{$.Name}} {
     @JsonCreator
     public {{.Name}} {}
@@ -905,7 +935,7 @@ import {{.}};
 @JsonTypeName("{{.Variant.ConstValue}}")
 public record {{.Variant.Name}}(
     @JsonProperty(value = "{{.DiscriminatorJSON}}") String {{camel .DiscriminatorField}}{{range .Variant.Type.Fields}}{{if ne .JSONName $.DiscriminatorJSON}},
-    @JsonProperty(value = "{{.JSONName}}"{{if .Required}}, required = true{{end}}) {{javaType .Type .Required}} {{camel .Name}}{{end}}{{end}}
+    @JsonProperty(value = "{{.JSONName}}"{{if .Required}}, required = true{{end}}) {{javaType .Type .Required}} {{javaFieldName .}}{{end}}{{end}}
 ) implements {{.UnionName}} {
     @JsonCreator
     public {{.Variant.Name}} {}

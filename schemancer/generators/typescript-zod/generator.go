@@ -23,6 +23,8 @@ var DefaultFormatMappings = map[ir.IRFormat]generators.FormatTypeMapping{
 
 // config holds TypeScript Zod-specific generator configuration
 type config struct {
+	// Output filename (default: "schema.ts")
+	filename string
 	// Whether to export all types (default: true)
 	exportTypes bool
 }
@@ -42,6 +44,13 @@ func WithExportTypes(export bool) Option {
 	}}
 }
 
+// WithFilename sets the output filename (default: "schema.ts")
+func WithFilename(name string) Option {
+	return Option{apply: func(c *config) {
+		c.filename = name
+	}}
+}
+
 type Generator struct{}
 
 func (g *Generator) getFormatMappings(opts generators.GeneratorOptions) map[ir.IRFormat]generators.FormatTypeMapping {
@@ -57,6 +66,7 @@ func (g *Generator) getFormatMappings(opts generators.GeneratorOptions) map[ir.I
 
 func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genOpts ...generators.GeneratorOption) ([]generators.GeneratedFile, error) {
 	cfg := &config{
+		filename:    "schema.ts",
 		exportTypes: true,
 	}
 	for _, opt := range genOpts {
@@ -118,7 +128,7 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 	}
 
 	return []generators.GeneratedFile{{
-		Filename: "schema.ts",
+		Filename: cfg.filename,
 		Content:  buf.Bytes(),
 	}}, nil
 }

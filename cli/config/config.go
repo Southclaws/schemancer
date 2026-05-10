@@ -54,8 +54,10 @@ type TypeScriptConfig struct {
 	Output *string `json:"output,omitempty"`
 }
 
-// Configuration for TypeScript Zod code generation. Controls the output directory and custom format type mappings. The generated code produces Zod v4 schemas with z.infer<> type exports and full constraint support.
+// Configuration for TypeScript Zod code generation. Controls the output directory, output filename, and custom format type mappings. The generated code produces Zod v4 schemas with z.infer<> type exports and full constraint support.
 type TypeScriptZodConfig struct {
+	// The filename for the generated Zod schema file. Defaults to "schema.ts" if not specified. Use this to customize the output filename, for example "validators.ts" or "zod-schemas.ts".
+	Filename *string `json:"filename,omitempty"`
 	// Custom type mappings for JSON Schema "format" values. Use this to override the default Zod type mappings or add custom format handlers. The map key is the JSON Schema format string and the value describes the Zod type and optional import path.
 	FormatMappings map[string]FormatMapping `json:"format_mappings,omitempty"`
 	// The output directory path where the generated Zod schema file will be written. The directory will be created if it does not exist. This field is required for the language to be included in multi-language generation mode.

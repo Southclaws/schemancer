@@ -10,7 +10,7 @@ import java.util.List;
 public class UntitledMultiSelectEnumSchemaItems {
     /** Array of enum values to choose from. */
     @JsonProperty(value = "enum", required = true)
-    public List<String> enum = new ArrayList<>();
+    public List<String> enum_ = new ArrayList<>();
     @JsonProperty(value = "type", required = true)
     public String type;
 }

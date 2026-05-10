@@ -14,6 +14,7 @@ import (
 	"github.com/Southclaws/schemancer/schemancer/generators/golang"
 	"github.com/Southclaws/schemancer/schemancer/generators/java"
 	"github.com/Southclaws/schemancer/schemancer/generators/typescript"
+	typescriptzod "github.com/Southclaws/schemancer/schemancer/generators/typescript-zod"
 	"github.com/Southclaws/schemancer/schemancer/loader"
 )
 
@@ -216,7 +217,10 @@ func getGeneratorOptions(cmd *cobra.Command, cfg *config.Config, language string
 		// Python has no special options yet
 
 	case "typescript-zod":
-		// TypeScript Zod has no special options yet
+		// Resolve filename: config > default ("schema.ts")
+		if cfg != nil && cfg.TypescriptZod != nil && cfg.TypescriptZod.Filename != nil && *cfg.TypescriptZod.Filename != "" {
+			genOpts = append(genOpts, typescriptzod.WithFilename(*cfg.TypescriptZod.Filename))
+		}
 
 	default:
 		return nil, fmt.Errorf("unsupported language: %s (supported: golang, typescript, typescript-zod, java, python)", language)

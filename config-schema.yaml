@@ -142,8 +142,9 @@ $defs:
   TypeScriptZodConfig:
     description: >-
       Configuration for TypeScript Zod code generation. Controls the output
-      directory and custom format type mappings. The generated code produces
-      Zod v4 schemas with z.infer<> type exports and full constraint support.
+      directory, output filename, and custom format type mappings. The
+      generated code produces Zod v4 schemas with z.infer<> type exports
+      and full constraint support.
     type: object
     properties:
       output:
@@ -153,6 +154,12 @@ $defs:
           be written. The directory will be created if it does not exist.
           This field is required for the language to be included in
           multi-language generation mode.
+      filename:
+        type: string
+        description: >-
+          The filename for the generated Zod schema file. Defaults to
+          "schema.ts" if not specified. Use this to customize the output
+          filename, for example "validators.ts" or "zod-schemas.ts".
       format_mappings:
         description: >-
           Custom type mappings for JSON Schema "format" values. Use this to

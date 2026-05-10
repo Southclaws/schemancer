@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StringSchema {
     @JsonProperty(value = "default")
-    public String default;
+    public String default_;
     @JsonProperty(value = "description")
     public String description;
     @JsonProperty(value = "format")
