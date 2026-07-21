@@ -20,10 +20,10 @@ public class ServerConfig {
     public String host = "localhost";
     @JsonProperty(value = "maxRetries")
     @JsonSetter(nulls = Nulls.SKIP)
-    public Long maxRetries = 3;
+    public Long maxRetries = 3L;
     @JsonProperty(value = "port")
     @JsonSetter(nulls = Nulls.SKIP)
-    public Long port = 8080;
+    public Long port = 8080L;
     @JsonProperty(value = "tags")
     public List<String> tags;
     @JsonProperty(value = "timeout")

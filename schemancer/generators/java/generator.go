@@ -116,6 +116,7 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 	}
 
 	formatMappings := g.getFormatMappings(opts)
+	typeIndex := buildTypeIndex(data.Types)
 
 	// Build type-kind lookup for constructor generation
 	typeKinds := make(map[string]ir.IRTypeKind)
@@ -130,14 +131,14 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 		"kebab":            casing.ToKebabCase,
 		"lower":            strings.ToLower,
 		"upper":            strings.ToUpper,
-		"javaType":         makeJavaTypeFunc(formatMappings),
-		"javaInit":         makeJavaInitFunc(),
+		"javaType":         makeJavaTypeFunc(formatMappings, typeIndex),
+		"javaInit":         makeJavaInitFunc(typeIndex),
 		"javaDefault":      makeJavaDefaultFunc(),
 		"javaFieldName":    makeJavaFieldNameFunc(),
 		"javaConstructor":  makeJavaConstructorFunc(typeKinds),
 		"javaJsonInclude":  makeJavaJsonIncludeFunc(),
-		"javaGetter":       makeJavaGetterFunc(formatMappings),
-		"javaSetter":       makeJavaSetterFunc(formatMappings),
+		"javaGetter":       makeJavaGetterFunc(formatMappings, typeIndex),
+		"javaSetter":       makeJavaSetterFunc(formatMappings, typeIndex),
 		"comment":          formatComment,
 		"hasPrefix":        strings.HasPrefix,
 		"isIntEnum":        isIntEnum,
@@ -159,9 +160,13 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 	var files []generators.GeneratedFile
 
 	for _, t := range data.Types {
+		if t.Kind == ir.IRKindAlias && isInlinableAlias(t, typeIndex) {
+			continue
+		}
+
 		if t.Kind == ir.IRKindDiscriminatedUnion && t.Union != nil {
 			// Interface file
-			tplData := preparePerTypeData(cfg.packageName, t, formatMappings, cfg.accessors, cfg.propertyInclusion)
+			tplData := preparePerTypeData(cfg.packageName, t, formatMappings, typeIndex, cfg.accessors, cfg.propertyInclusion)
 			var buf bytes.Buffer
 			if err := tmpl.Execute(&buf, tplData); err != nil {
 				return nil, err
@@ -173,7 +178,7 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 
 			// One file per variant
 			for _, v := range t.Union.Variants {
-				vData := prepareVariantData(cfg.packageName, v, t, formatMappings)
+				vData := prepareVariantData(cfg.packageName, v, t, formatMappings, typeIndex)
 				var vBuf bytes.Buffer
 				if err := variantTmpl.Execute(&vBuf, vData); err != nil {
 					return nil, err
@@ -186,7 +191,7 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 			continue
 		}
 
-		tplData := preparePerTypeData(cfg.packageName, t, formatMappings, cfg.accessors, cfg.propertyInclusion)
+		tplData := preparePerTypeData(cfg.packageName, t, formatMappings, typeIndex, cfg.accessors, cfg.propertyInclusion)
 
 		var buf bytes.Buffer
 		if err := tmpl.Execute(&buf, tplData); err != nil {
@@ -276,7 +281,7 @@ type variantData struct {
 	DiscriminatorJSON  string
 }
 
-func preparePerTypeData(packageName string, t ir.IRType, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, accessors bool, propertyInclusion PropertyInclusion) perTypeData {
+func preparePerTypeData(packageName string, t ir.IRType, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, typeIndex map[string]ir.IRType, accessors bool, propertyInclusion PropertyInclusion) perTypeData {
 	importSet := make(map[string]bool)
 	hasUnion := false
 
@@ -296,7 +301,7 @@ func preparePerTypeData(packageName string, t ir.IRType, formatMappings map[ir.I
 		if propertyInclusion != PropertyInclusionAlways {
 			importSet["com.fasterxml.jackson.annotation.JsonInclude"] = true
 		}
-		collectImportsFromType(t, formatMappings, importSet)
+		collectImportsFromType(t, formatMappings, typeIndex, importSet)
 
 		// Check if any field has a default value — if so, add JsonSetter and Nulls imports
 		for _, field := range t.Fields {
@@ -324,14 +329,14 @@ func preparePerTypeData(packageName string, t ir.IRType, formatMappings map[ir.I
 	}
 }
 
-func prepareVariantData(packageName string, v ir.IRVariant, union ir.IRType, formatMappings map[ir.IRFormat]generators.FormatTypeMapping) variantData {
+func prepareVariantData(packageName string, v ir.IRVariant, union ir.IRType, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, typeIndex map[string]ir.IRType) variantData {
 	importSet := make(map[string]bool)
 	importSet["com.fasterxml.jackson.annotation.JsonCreator"] = true
 	importSet["com.fasterxml.jackson.annotation.JsonProperty"] = true
 	importSet["com.fasterxml.jackson.annotation.JsonTypeName"] = true
 	// Records don't initialize fields, so skip ArrayList/HashMap imports
 	for _, field := range v.Type.Fields {
-		collectImportsFromRefForAlias(&field.Type, formatMappings, importSet)
+		collectImportsFromRefForAlias(&field.Type, formatMappings, typeIndex, importSet)
 	}
 
 	var imports []string
@@ -353,6 +358,7 @@ func prepareVariantData(packageName string, v ir.IRVariant, union ir.IRType, for
 func prepareTemplateData(packageName string, data *ir.IR, formatMappings map[ir.IRFormat]generators.FormatTypeMapping) templateData {
 	importSet := make(map[string]bool)
 	hasUnion := false
+	typeIndex := buildTypeIndex(data.Types)
 
 	for _, t := range data.Types {
 		if t.Kind == ir.IRKindEnum {
@@ -365,11 +371,11 @@ func prepareTemplateData(packageName string, data *ir.IR, formatMappings map[ir.
 			importSet["com.fasterxml.jackson.annotation.JsonSubTypes"] = true
 			importSet["com.fasterxml.jackson.annotation.JsonTypeInfo"] = true
 			importSet["com.fasterxml.jackson.annotation.JsonTypeName"] = true
-			collectImportsFromUnion(t, formatMappings, importSet)
+			collectImportsFromUnion(t, formatMappings, typeIndex, importSet)
 		} else {
 			importSet["com.fasterxml.jackson.annotation.JsonIgnoreProperties"] = true
 			importSet["com.fasterxml.jackson.annotation.JsonProperty"] = true
-			collectImportsFromType(t, formatMappings, importSet)
+			collectImportsFromType(t, formatMappings, typeIndex, importSet)
 
 			for _, field := range t.Fields {
 				if field.Default != nil {
@@ -395,37 +401,39 @@ func prepareTemplateData(packageName string, data *ir.IR, formatMappings map[ir.
 	}
 }
 
-func collectImportsFromType(t ir.IRType, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, importSet map[string]bool) {
+func collectImportsFromType(t ir.IRType, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, typeIndex map[string]ir.IRType, importSet map[string]bool) {
 	for _, field := range t.Fields {
-		collectImportsFromRefInner(&field.Type, formatMappings, importSet, field.Required)
+		collectImportsFromRefInner(&field.Type, formatMappings, typeIndex, importSet, field.Required)
 	}
 	if t.Element != nil {
 		// Alias types don't initialize fields, so skip ArrayList/HashMap imports
-		collectImportsFromRefForAlias(t.Element, formatMappings, importSet)
+		collectImportsFromRefForAlias(t.Element, formatMappings, typeIndex, importSet)
 	}
 }
 
-func collectImportsFromUnion(t ir.IRType, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, importSet map[string]bool) {
+func collectImportsFromUnion(t ir.IRType, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, typeIndex map[string]ir.IRType, importSet map[string]bool) {
 	if t.Union != nil {
 		for _, v := range t.Union.Variants {
-			collectImportsFromType(v.Type, formatMappings, importSet)
+			collectImportsFromType(v.Type, formatMappings, typeIndex, importSet)
 		}
 	}
 }
 
-func collectImportsFromRef(ref *ir.IRTypeRef, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, importSet map[string]bool) {
-	collectImportsFromRefInner(ref, formatMappings, importSet, true)
+func collectImportsFromRef(ref *ir.IRTypeRef, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, typeIndex map[string]ir.IRType, importSet map[string]bool) {
+	collectImportsFromRefInner(ref, formatMappings, typeIndex, importSet, true)
 }
 
 // collectImportsFromRefForAlias collects imports without ArrayList/HashMap (aliases don't initialize fields)
-func collectImportsFromRefForAlias(ref *ir.IRTypeRef, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, importSet map[string]bool) {
-	collectImportsFromRefInner(ref, formatMappings, importSet, false)
+func collectImportsFromRefForAlias(ref *ir.IRTypeRef, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, typeIndex map[string]ir.IRType, importSet map[string]bool) {
+	collectImportsFromRefInner(ref, formatMappings, typeIndex, importSet, false)
 }
 
-func collectImportsFromRefInner(ref *ir.IRTypeRef, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, importSet map[string]bool, includeInitImports bool) {
+func collectImportsFromRefInner(ref *ir.IRTypeRef, formatMappings map[ir.IRFormat]generators.FormatTypeMapping, typeIndex map[string]ir.IRType, importSet map[string]bool, includeInitImports bool) {
 	if ref == nil {
 		return
 	}
+
+	ref = resolveInlinedRef(ref, typeIndex)
 
 	// Check for format-specific imports
 	if mapping, ok := formatMappings[ref.Format]; ok {
@@ -442,7 +450,7 @@ func collectImportsFromRefInner(ref *ir.IRTypeRef, formatMappings map[ir.IRForma
 		if includeInitImports {
 			importSet["java.util.ArrayList"] = true
 		}
-		collectImportsFromRefInner(ref.Array, formatMappings, importSet, includeInitImports)
+		collectImportsFromRefInner(ref.Array, formatMappings, typeIndex, importSet, includeInitImports)
 	}
 
 	// Check for Map import
@@ -451,7 +459,7 @@ func collectImportsFromRefInner(ref *ir.IRTypeRef, formatMappings map[ir.IRForma
 		if includeInitImports {
 			importSet["java.util.HashMap"] = true
 		}
-		collectImportsFromRefInner(ref.Map, formatMappings, importSet, includeInitImports)
+		collectImportsFromRefInner(ref.Map, formatMappings, typeIndex, importSet, includeInitImports)
 	}
 }
 
@@ -464,10 +472,93 @@ func addJavaImport(typeName string, importSet map[string]bool) {
 	}
 }
 
-func makeJavaTypeFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapping) func(*ir.IRTypeRef, bool) string {
+func buildTypeIndex(types []ir.IRType) map[string]ir.IRType {
+	index := make(map[string]ir.IRType, len(types))
+	for _, t := range types {
+		index[t.Name] = t
+	}
+	return index
+}
+
+func isInlinableElement(ref *ir.IRTypeRef) bool {
+	if ref == nil {
+		return false
+	}
+	if ref.Builtin == ir.IRBuiltinAny {
+		return false
+	}
+	if ref.Builtin != ir.IRBuiltinNone {
+		return true
+	}
+	if ref.Format != ir.IRFormatNone {
+		return true
+	}
+	if ref.Array != nil || ref.Map != nil {
+		return true
+	}
+	return false
+}
+
+func resolvedAliasElement(ref *ir.IRTypeRef, index map[string]ir.IRType, visited map[string]bool) *ir.IRTypeRef {
+	if ref == nil {
+		return nil
+	}
+	if isInlinableElement(ref) {
+		return ref
+	}
+	if ref.Name == "" {
+		return nil
+	}
+	if visited[ref.Name] {
+		return nil
+	}
+	visited[ref.Name] = true
+
+	t, ok := index[ref.Name]
+	if !ok || t.Kind != ir.IRKindAlias || t.Element == nil {
+		return nil
+	}
+	return resolvedAliasElement(t.Element, index, visited)
+}
+
+func isInlinableAlias(t ir.IRType, index map[string]ir.IRType) bool {
+	if t.Kind != ir.IRKindAlias || t.Element == nil {
+		return false
+	}
+	return resolvedAliasElement(t.Element, index, make(map[string]bool)) != nil
+}
+
+func resolveInlinedRef(ref *ir.IRTypeRef, index map[string]ir.IRType) *ir.IRTypeRef {
+	if ref == nil {
+		return nil
+	}
+
+	resolved := resolvedAliasElement(ref, index, make(map[string]bool))
+	if resolved == nil {
+		return ref
+	}
+
+	constraints := ref.Constraints
+	if constraints == nil {
+		constraints = resolved.Constraints
+	}
+
+	return &ir.IRTypeRef{
+		Builtin:     resolved.Builtin,
+		Format:      resolved.Format,
+		Array:       resolved.Array,
+		Map:         resolved.Map,
+		Name:        resolved.Name,
+		Nullable:    ref.Nullable,
+		Constraints: constraints,
+	}
+}
+
+func makeJavaTypeFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapping, typeIndex map[string]ir.IRType) func(*ir.IRTypeRef, bool) string {
 	// javaTypeBoxed returns the boxed version of a type (for use in generics)
 	var javaTypeBoxed func(*ir.IRTypeRef) string
 	javaTypeBoxed = func(ref *ir.IRTypeRef) string {
+		ref = resolveInlinedRef(ref, typeIndex)
 		// Check format first
 		if mapping, ok := formatMappings[ref.Format]; ok {
 			return getSimpleTypeName(mapping.Type)
@@ -498,6 +589,7 @@ func makeJavaTypeFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMappin
 
 	var javaType func(*ir.IRTypeRef, bool) string
 	javaType = func(ref *ir.IRTypeRef, required bool) string {
+		ref = resolveInlinedRef(ref, typeIndex)
 		var baseType string
 
 		// Check format first
@@ -549,12 +641,12 @@ func makeJavaTypeFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMappin
 	return javaType
 }
 
-func makeJavaInitFunc() func(ir.IRField) string {
+func makeJavaInitFunc(typeIndex map[string]ir.IRType) func(ir.IRField) string {
 	return func(field ir.IRField) string {
 		if !field.Required {
 			return ""
 		}
-		ref := &field.Type
+		ref := resolveInlinedRef(&field.Type, typeIndex)
 		if ref.Array != nil {
 			return " = new ArrayList<>()"
 		}
@@ -654,8 +746,8 @@ func makeJavaJsonIncludeFunc() func(PropertyInclusion) string {
 }
 
 // makeJavaGetterFunc returns a template function that generates a getter method for a field.
-func makeJavaGetterFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapping) func(ir.IRField) string {
-	javaType := makeJavaTypeFunc(formatMappings)
+func makeJavaGetterFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapping, typeIndex map[string]ir.IRType) func(ir.IRField) string {
+	javaType := makeJavaTypeFunc(formatMappings, typeIndex)
 	return func(field ir.IRField) string {
 		fieldName := safeJavaFieldName(field)
 		typeName := javaType(&field.Type, field.Required)
@@ -673,8 +765,8 @@ func makeJavaGetterFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapp
 }
 
 // makeJavaSetterFunc returns a template function that generates a setter method for a field.
-func makeJavaSetterFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapping) func(ir.IRField) string {
-	javaType := makeJavaTypeFunc(formatMappings)
+func makeJavaSetterFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapping, typeIndex map[string]ir.IRType) func(ir.IRField) string {
+	javaType := makeJavaTypeFunc(formatMappings, typeIndex)
 	return func(field ir.IRField) string {
 		fieldName := safeJavaFieldName(field)
 		typeName := javaType(&field.Type, field.Required)

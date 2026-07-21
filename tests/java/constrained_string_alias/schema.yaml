@@ -1,0 +1,17 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: ConstrainedStringAliasTests
+$defs:
+  QualifiedCode:
+    description: A constrained string code value.
+    type: string
+    minLength: 7
+    maxLength: 7
+    pattern: "^\\d{4}\\.\\d{2}$"
+
+  Item:
+    type: object
+    required:
+      - code
+    properties:
+      code:
+        $ref: "#/$defs/QualifiedCode"
