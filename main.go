@@ -13,6 +13,7 @@ import (
 	"github.com/Southclaws/schemancer/schemancer/generators"
 	"github.com/Southclaws/schemancer/schemancer/generators/golang"
 	"github.com/Southclaws/schemancer/schemancer/generators/java"
+	"github.com/Southclaws/schemancer/schemancer/generators/rust"
 	"github.com/Southclaws/schemancer/schemancer/generators/typescript"
 	typescriptzod "github.com/Southclaws/schemancer/schemancer/generators/typescript-zod"
 	"github.com/Southclaws/schemancer/schemancer/loader"
@@ -29,6 +30,9 @@ var (
 	// TypeScript options
 	tsNullOptional bool
 	tsBranded      bool
+
+	// Rust options
+	rustFilename string
 )
 
 func main() {
@@ -56,6 +60,7 @@ specific language to that output path.`,
 	// TypeScript flags
 	rootCmd.Flags().BoolVar(&tsNullOptional, "null-optional", false, "TypeScript: use null instead of undefined for optional fields")
 	rootCmd.Flags().BoolVar(&tsBranded, "branded-primitives", false, "TypeScript: use branded types for primitive type aliases")
+	rootCmd.Flags().StringVar(&rustFilename, "rust-filename", "", "Rust: generated source filename")
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
@@ -223,6 +228,16 @@ func getGeneratorOptions(cmd *cobra.Command, cfg *config.Config, language string
 	case "python":
 		// Python has no special options yet
 
+	case "rust":
+		filename := "types.rs"
+		if cfg != nil && cfg.Rust != nil && cfg.Rust.Filename != nil {
+			filename = *cfg.Rust.Filename
+		}
+		if rustFilename != "" {
+			filename = rustFilename
+		}
+		genOpts = append(genOpts, rust.WithFilename(filename))
+
 	case "typescript-zod":
 		// Resolve filename: config > default ("schema.ts")
 		if cfg != nil && cfg.TypescriptZod != nil && cfg.TypescriptZod.Filename != nil && *cfg.TypescriptZod.Filename != "" {
@@ -230,7 +245,7 @@ func getGeneratorOptions(cmd *cobra.Command, cfg *config.Config, language string
 		}
 
 	default:
-		return nil, fmt.Errorf("unsupported language: %s (supported: golang, typescript, typescript-zod, java, python)", language)
+		return nil, fmt.Errorf("unsupported language: %s (supported: golang, typescript, typescript-zod, java, python, rust)", language)
 	}
 
 	return genOpts, nil

@@ -7,6 +7,7 @@ import (
 	"github.com/Southclaws/schemancer/schemancer/generators/golang"
 	"github.com/Southclaws/schemancer/schemancer/generators/java"
 	"github.com/Southclaws/schemancer/schemancer/generators/python"
+	"github.com/Southclaws/schemancer/schemancer/generators/rust"
 	"github.com/Southclaws/schemancer/schemancer/generators/typescript"
 	typescriptzod "github.com/Southclaws/schemancer/schemancer/generators/typescript-zod"
 
@@ -19,6 +20,7 @@ var Generators = map[generators.Language]generators.Generator{
 	generators.LanguageTypeScriptZod: &typescriptzod.Generator{},
 	generators.LanguageJava:          &java.Generator{},
 	generators.LanguagePython:        &python.Generator{},
+	generators.LanguageRust:          &rust.Generator{},
 }
 
 func Generate(schema *jsonschema.Schema, opts generators.GlobalOptions, genOpts ...generators.GeneratorOption) ([]generators.GeneratedFile, error) {

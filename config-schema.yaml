@@ -45,6 +45,11 @@ properties:
       schemancer will generate Python source files using Pydantic v2 BaseModel
       classes with full type annotations and validation support.
     $ref: "#/$defs/PythonConfig"
+  rust:
+    description: >-
+      Rust-specific generation options. Generated types derive Serde
+      serialization and preserve missing versus null field states.
+    $ref: "#/$defs/RustConfig"
 
 $defs:
   GolangConfig:
@@ -245,6 +250,28 @@ $defs:
           to override defaults or add mappings for custom formats. The map
           key is the JSON Schema format string and the value describes the
           Python type and import path.
+        type: object
+        additionalProperties:
+          $ref: "#/$defs/FormatMapping"
+
+  RustConfig:
+    description: >-
+      Configuration for Rust code generation using Serde wire types.
+    type: object
+    properties:
+      output:
+        type: string
+        description: >-
+          The output directory path where the generated Rust file will be
+          written.
+      filename:
+        type: string
+        description: >-
+          The generated source filename. Defaults to types.rs.
+      format_mappings:
+        description: >-
+          Custom type mappings for JSON Schema format values. Imports use
+          Rust use-path syntax and types may be arbitrary Rust type expressions.
         type: object
         additionalProperties:
           $ref: "#/$defs/FormatMapping"

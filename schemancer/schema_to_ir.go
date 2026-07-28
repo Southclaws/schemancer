@@ -313,7 +313,7 @@ func convertSchemaToIRType(root *jsonschema.Schema, name string, schema *jsonsch
 		// If merge fails, fall through to other handling
 	}
 
-	if len(schema.AnyOf) > 0 || len(schema.OneOf) > 0 {
+	if (len(schema.AnyOf) > 0 || len(schema.OneOf) > 0) && schema.Type != "object" && schema.Properties == nil {
 		// Build a non-discriminated union from the variants
 		variants := collectUnionVariants(root, schema, goName, inlineTypes)
 		return &ir.IRType{
@@ -532,11 +532,19 @@ func convertStructToIRType(root *jsonschema.Schema, name string, schema *jsonsch
 	}
 
 	return &ir.IRType{
-		Name:        goName,
-		Description: schema.Description,
-		Kind:        ir.IRKindStruct,
-		Fields:      fields,
+		Name:              goName,
+		Description:       schema.Description,
+		Kind:              ir.IRKindStruct,
+		Fields:            fields,
+		DenyUnknownFields: deniesAdditionalProperties(schema),
 	}
+}
+
+func deniesAdditionalProperties(schema *jsonschema.Schema) bool {
+	if schema == nil || schema.AdditionalProperties == nil || schema.AdditionalProperties.Not == nil {
+		return false
+	}
+	return reflect.ValueOf(*schema.AdditionalProperties.Not).IsZero()
 }
 
 // collectUnionVariants builds IRTypeRef variants from oneOf/anyOf schemas.
@@ -614,6 +622,20 @@ func schemaToIRTypeRefWithContext(root *jsonschema.Schema, schema *jsonschema.Sc
 
 	if schema.Const != nil {
 		return ir.IRTypeRef{Builtin: ir.IRBuiltinString, Constraints: constraints}
+	}
+
+	if len(schema.Enum) > 0 {
+		enumType, enumValues, nullable := classifyEnum(schema.Enum)
+		if enumType != ir.IRBuiltinAny {
+			return ir.IRTypeRef{
+				Builtin:     enumType,
+				EnumName:    symbolName(contextName),
+				EnumValues:  enumValues,
+				EnumType:    enumType,
+				Nullable:    nullable,
+				Constraints: constraints,
+			}
+		}
 	}
 
 	if len(schema.AnyOf) > 0 || len(schema.OneOf) > 0 {

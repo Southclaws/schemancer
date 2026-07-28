@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-schemancer (JSON Schema Code Generator) generates type-safe code from JSON Schema definitions. It supports multiple target languages: Go, TypeScript, TypeScript-Zod, Java, and Python.
+schemancer (JSON Schema Code Generator) generates type-safe code from JSON Schema definitions. It supports multiple target languages: Go, Rust, TypeScript, TypeScript-Zod, Java, and Python.
 
 ## Commands
 
@@ -27,6 +27,7 @@ go run . schema.yaml typescript ./output
 go run . schema.yaml typescript-zod ./output
 go run . schema.yaml java ./output
 go run . schema.yaml python ./output
+go run . schema.yaml rust ./output
 
 # Generate code (all configured languages from schemancer.yaml)
 go run . schema.yaml

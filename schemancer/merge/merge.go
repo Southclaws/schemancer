@@ -4,6 +4,7 @@ package merge
 
 import (
 	"encoding/json"
+	"reflect"
 	"strings"
 
 	"github.com/google/jsonschema-go/jsonschema"
@@ -91,6 +92,9 @@ func AllOf(root *jsonschema.Schema, s *jsonschema.Schema) *jsonschema.Schema {
 		Required:    []string{},
 		Description: s.Description,
 	}
+	if deniesAdditionalProperties(s) {
+		merged.AdditionalProperties = &jsonschema.Schema{Not: &jsonschema.Schema{}}
+	}
 
 	// First, include any properties directly on the schema
 	if s.Properties != nil {
@@ -115,6 +119,9 @@ func AllOf(root *jsonschema.Schema, s *jsonschema.Schema) *jsonschema.Schema {
 		if sub == nil {
 			continue
 		}
+		if deniesAdditionalProperties(sub) {
+			merged.AdditionalProperties = &jsonschema.Schema{Not: &jsonschema.Schema{}}
+		}
 
 		// Merge properties (last definition wins, allowing overrides like const)
 		if sub.Properties != nil {
@@ -131,6 +138,13 @@ func AllOf(root *jsonschema.Schema, s *jsonschema.Schema) *jsonschema.Schema {
 	merged.Required = uniqueStrings(merged.Required)
 
 	return merged
+}
+
+func deniesAdditionalProperties(schema *jsonschema.Schema) bool {
+	return schema != nil &&
+		schema.AdditionalProperties != nil &&
+		schema.AdditionalProperties.Not != nil &&
+		reflect.ValueOf(*schema.AdditionalProperties.Not).IsZero()
 }
 
 // uniqueStrings returns a new slice with duplicate strings removed.

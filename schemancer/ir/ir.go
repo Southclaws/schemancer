@@ -8,18 +8,19 @@ type IR struct {
 }
 
 type IRType struct {
-	Name        string
-	Description string
-	Kind        IRTypeKind
-	BaseType    string // Name of the base type this extends (from allOf $ref composition)
-	Fields      []IRField
-	Element     *IRTypeRef
-	KeyType     *IRTypeRef
-	Enum        []string              // String enum values (backwards compatible)
-	EnumValues  []IREnumValue         // Typed enum values (supports int, string, null)
-	EnumType    IRBuiltin             // The underlying type of the enum (string, int)
-	Union       *IRDiscriminatedUnion // For discriminated unions (oneOf with discriminator)
-	SimpleUnion *IRUnion              // For non-discriminated unions (oneOf/anyOf without discriminator)
+	Name              string
+	Description       string
+	Kind              IRTypeKind
+	BaseType          string // Name of the base type this extends (from allOf $ref composition)
+	Fields            []IRField
+	Element           *IRTypeRef
+	KeyType           *IRTypeRef
+	Enum              []string              // String enum values (backwards compatible)
+	EnumValues        []IREnumValue         // Typed enum values (supports int, string, null)
+	EnumType          IRBuiltin             // The underlying type of the enum (string, int)
+	Union             *IRDiscriminatedUnion // For discriminated unions (oneOf with discriminator)
+	SimpleUnion       *IRUnion              // For non-discriminated unions (oneOf/anyOf without discriminator)
+	DenyUnknownFields bool                  // The source object sets additionalProperties to false
 }
 
 // IREnumValue represents a single enum value with type information
@@ -59,6 +60,9 @@ type IRTypeRef struct {
 	Name        string
 	Builtin     IRBuiltin
 	Format      IRFormat
+	EnumName    string
+	EnumValues  []IREnumValue
+	EnumType    IRBuiltin
 	Array       *IRTypeRef
 	Map         *IRTypeRef
 	Nullable    bool

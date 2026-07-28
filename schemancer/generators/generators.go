@@ -12,6 +12,7 @@ const (
 	LanguageTypeScriptZod Language = "typescript-zod"
 	LanguageJava          Language = "java"
 	LanguagePython        Language = "python"
+	LanguageRust          Language = "rust"
 )
 
 // GeneratedFile represents a single generated output file

@@ -58,6 +58,13 @@ func (c *Config) GetConfiguredLanguages() []LanguageOutput {
 		})
 	}
 
+	if c.Rust != nil && c.Rust.Output != nil {
+		languages = append(languages, LanguageOutput{
+			Language: generators.LanguageRust,
+			Output:   *c.Rust.Output,
+		})
+	}
+
 	return languages
 }
 
@@ -108,6 +115,10 @@ func (c *Config) GetFormatMappings(language generators.Language) map[ir.IRFormat
 	case generators.LanguagePython:
 		if c.Python != nil {
 			mappings = c.Python.FormatMappings
+		}
+	case generators.LanguageRust:
+		if c.Rust != nil {
+			mappings = c.Rust.FormatMappings
 		}
 	}
 

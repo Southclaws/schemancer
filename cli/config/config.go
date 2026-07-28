@@ -24,14 +24,14 @@ type GolangConfig struct {
 type JavaConfig struct {
 	// When true, generates getter and setter methods for all fields instead of using public fields. The fields become private and are accessed through getFieldName()/setFieldName() methods following standard JavaBean conventions. Defaults to false.
 	Accessors *bool `json:"accessors,omitempty"`
-	// Controls Jackson @JsonInclude behavior on generated classes. Supported values are "non_null" (the default), which omits null fields on serialization; "non_empty", which also omits empty collections and maps; and "always", which emits no @JsonInclude annotation.
-	PropertyInclusion *string `json:"property_inclusion,omitempty"`
 	// Custom type mappings for JSON Schema "format" values. By default, schemancer maps common formats to standard Java types (e.g. "uuid" to java.util.UUID, "date-time" to java.time.OffsetDateTime). Use this to override defaults or add mappings for custom formats. The map key is the JSON Schema format string and the value describes the Java type and import path.
 	FormatMappings map[string]FormatMapping `json:"format_mappings,omitempty"`
 	// The output directory path where generated Java files will be written. The directory will be created if it does not exist. Each top-level type produces a separate .java file. This field is required for the language to be included in multi-language generation mode.
 	Output *string `json:"output,omitempty"`
 	// The Java package name for the generated classes. This appears in the "package" declaration at the top of each generated file. Defaults to "generated" if not specified. Can be overridden by the --package CLI flag.
 	Package *string `json:"package,omitempty"`
+	// Controls Jackson @JsonInclude behavior on generated classes. "non_null" (default) omits null fields on serialization. "non_empty" also omits empty collections and maps. "always" emits no @JsonInclude annotation.
+	PropertyInclusion *string `json:"property_inclusion,omitempty"`
 }
 
 // Configuration for Python code generation. Controls the output directory and custom format type mappings. The generated code uses Pydantic v2 BaseModel classes with full type annotations.
@@ -39,6 +39,16 @@ type PythonConfig struct {
 	// Custom type mappings for JSON Schema "format" values. By default, schemancer maps common formats to standard Python types (e.g. "uuid" to uuid.UUID, "date-time" to datetime.datetime). Use this to override defaults or add mappings for custom formats. The map key is the JSON Schema format string and the value describes the Python type and import path.
 	FormatMappings map[string]FormatMapping `json:"format_mappings,omitempty"`
 	// The output directory path where the generated Python file will be written. The directory will be created if it does not exist. This field is required for the language to be included in multi-language generation mode.
+	Output *string `json:"output,omitempty"`
+}
+
+// Configuration for Rust code generation using Serde wire types.
+type RustConfig struct {
+	// The generated source filename. Defaults to types.rs.
+	Filename *string `json:"filename,omitempty"`
+	// Custom type mappings for JSON Schema format values. Imports use Rust use-path syntax and types may be arbitrary Rust type expressions.
+	FormatMappings map[string]FormatMapping `json:"format_mappings,omitempty"`
+	// The output directory path where the generated Rust file will be written.
 	Output *string `json:"output,omitempty"`
 }
 
@@ -74,6 +84,8 @@ type Config struct {
 	Java *JavaConfig `json:"java,omitempty"`
 	// Python-specific generation options. When present with an output path set, schemancer will generate Python source files using Pydantic v2 BaseModel classes with full type annotations and validation support.
 	Python *PythonConfig `json:"python,omitempty"`
+	// Rust-specific generation options. Generated types derive Serde serialization and preserve missing versus null field states.
+	Rust *RustConfig `json:"rust,omitempty"`
 	// TypeScript-specific generation options. When present with an output path set, schemancer will generate TypeScript type definitions. The generated code produces interfaces and type aliases suitable for use with any TypeScript project.
 	Typescript *TypeScriptConfig `json:"typescript,omitempty"`
 	// TypeScript Zod-specific generation options. When present with an output path set, schemancer will generate Zod v4 schema definitions with inferred TypeScript types. The generated code produces z.object() schemas with full runtime validation support, including constraints like min/max length, numeric bounds, and array limits.

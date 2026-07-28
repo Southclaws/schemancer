@@ -8,6 +8,7 @@ import (
 	"github.com/Southclaws/schemancer/schemancer/generators"
 	"github.com/Southclaws/schemancer/schemancer/generators/golang"
 	"github.com/Southclaws/schemancer/schemancer/generators/java"
+	rustgen "github.com/Southclaws/schemancer/schemancer/generators/rust"
 	"github.com/Southclaws/schemancer/schemancer/generators/typescript"
 	"github.com/Southclaws/schemancer/schemancer/loader"
 	"github.com/Southclaws/schemancer/tests/testutil"
@@ -23,7 +24,7 @@ func TestMultiLanguageGeneration(t *testing.T) {
 	require.NoError(t, err, "failed to load schema")
 
 	languages := cfg.GetConfiguredLanguages()
-	require.Len(t, languages, 5, "expected 5 configured languages")
+	require.Len(t, languages, 6, "expected 6 configured languages")
 
 	// Generate Go
 	goFiles, err := schemancer.Generate(schema, generators.GlobalOptions{
@@ -62,4 +63,11 @@ func TestMultiLanguageGeneration(t *testing.T) {
 	})
 	require.NoError(t, err, "failed to generate Python")
 	testutil.WriteAndCompareMultipleFiles(t, pythonFiles, "generated/python", "expected/python")
+
+	// Generate Rust
+	rustFiles, err := schemancer.Generate(schema, generators.GlobalOptions{
+		Language: generators.LanguageRust,
+	}, rustgen.WithFilename("types.rs"))
+	require.NoError(t, err, "failed to generate Rust")
+	testutil.WriteAndCompareMultipleFiles(t, rustFiles, "generated/rust", "expected/rust")
 }

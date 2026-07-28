@@ -1,0 +1,33 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: Envelope
+type: object
+additionalProperties: false
+required: [required_value, required_nullable, event]
+properties:
+  required_value: { type: string }
+  required_nullable: { type: [string, "null"] }
+  optional_value: { type: string }
+  optional_nullable: { type: [string, "null"] }
+  mode: { type: string, enum: [fast, safe] }
+  event: { $ref: "#/$defs/Event" }
+
+$defs:
+  Event:
+    oneOf:
+      - { $ref: "#/$defs/DataEvent" }
+      - { $ref: "#/$defs/EmptyEvent" }
+
+  DataEvent:
+    type: object
+    additionalProperties: false
+    required: [kind, payload]
+    properties:
+      kind: { type: string, const: data }
+      payload: { format: raw }
+
+  EmptyEvent:
+    type: object
+    additionalProperties: false
+    required: [kind]
+    properties:
+      kind: { type: string, const: empty }

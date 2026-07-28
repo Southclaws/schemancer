@@ -6,7 +6,7 @@
 
 ## Features
 
-- **Multi-language support**: Go, TypeScript, (Types, Zod), Java, Python (Pydantic v2)
+- **Multi-language support**: Go, Rust (Serde), TypeScript (plain types or Zod), Java, Python (Pydantic v2)
 - **Discriminated unions**: First-class support for tagged unions with type guards and pattern matching
 - **`allOf` base-type composition**: Base struct fields are merged into each union variant; a composing schema becomes a transparent type alias
 - **Inheritance via `allOf`**: Shared base types in discriminated union variants generate proper class inheritance in Python and base structs in Go/Java
@@ -47,6 +47,9 @@ schemancer schema.yaml python output.py
 # Generate TypeScript Zod schemas
 schemancer schema.yaml typescript-zod output.ts
 
+# Generate Rust Serde wire types
+schemancer schema.yaml rust generated --rust-filename types.rs
+
 # Output to stdout
 schemancer schema.yaml typescript -
 ```
@@ -72,6 +75,10 @@ java:
 
 python:
   output: "./generated"
+
+rust:
+  output: "./generated"
+  filename: "types.rs"
 ```
 
 Then run:
@@ -81,6 +88,8 @@ schemancer schema.yaml
 ```
 
 This generates all configured languages in one command.
+
+Rust generation runs `rustfmt`, so the Rust toolchain component must be available when generating Rust output.
 
 ## Discriminated Unions
 
@@ -98,25 +107,25 @@ $defs:
     type: object
     required: [type, id, name]
     properties:
-      type: { const: "created" }
-      id: { type: string }
-      name: { type: string }
+      type: {const: "created"}
+      id: {type: string}
+      name: {type: string}
 
   UpdatedEvent:
     type: object
     required: [type, id, changes]
     properties:
-      type: { const: "updated" }
-      id: { type: string }
-      changes: { type: object }
+      type: {const: "updated"}
+      id: {type: string}
+      changes: {type: object}
 
   DeletedEvent:
     type: object
     required: [type, id]
     properties:
-      type: { const: "deleted" }
-      id: { type: string }
-      reason: { type: string }
+      type: {const: "deleted"}
+      id: {type: string}
+      reason: {type: string}
 ```
 
 ### Generated TypeScript
@@ -151,7 +160,7 @@ export function isCreatedEvent(value: Event): value is CreatedEvent {
 ### Generated TypeScript Zod
 
 ```typescript
-import { z } from "zod";
+import {z} from "zod";
 
 export const CreatedEventSchema = z.object({
   type: z.literal("created"),
@@ -262,8 +271,8 @@ $defs:
   PluginConfigurationFieldBase:
     type: object
     properties:
-      id: { type: string }
-      label: { type: string }
+      id: {type: string}
+      label: {type: string}
 
   PluginConfigurationField:
     oneOf:
@@ -274,15 +283,15 @@ $defs:
     type: object
     required: [type]
     properties:
-      type: { type: string, const: string }
-      default: { type: string }
+      type: {type: string, const: string}
+      default: {type: string}
 
   PluginConfigurationFieldNumber:
     type: object
     required: [type]
     properties:
-      type: { type: string, const: number }
-      default: { type: number }
+      type: {type: string, const: number}
+      default: {type: number}
 ```
 
 Generated Go — base fields are merged into each variant, and the composing schema becomes an alias:
