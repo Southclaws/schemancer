@@ -1,0 +1,42 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: Messages
+oneOf:
+  - $ref: "#/$defs/ControlMessage"
+  - $ref: "#/$defs/StatusMessage"
+
+$defs:
+  ControlMessage:
+    type: object
+    properties:
+      type:
+        type: string
+        const: "control"
+      data:
+        $ref: "#/$defs/Command"
+    required:
+      - type
+      - data
+  StatusMessage:
+    type: object
+    properties:
+      type:
+        type: string
+        const: "status"
+      data:
+        $ref: "#/$defs/Status"
+  Command:
+    type: object
+    properties:
+      name:
+        type: string
+    required:
+      - name
+  Status:
+    type: object
+    properties:
+      success:
+        type: boolean
+      error:
+        type: string
+    required:
+      - success
