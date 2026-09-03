@@ -22,6 +22,9 @@ func SchemaToIR(schema *jsonschema.Schema) (*ir.IR, error) {
 		Types:  []ir.IRType{},
 	}
 
+	// Track which $defs names are used in discriminated unions to avoid duplicates
+	usedInUnions := make(map[string]bool)
+
 	union, _ := detect.DiscriminatedUnion(schema)
 	if union != nil {
 		unionName := ""
@@ -30,11 +33,15 @@ func SchemaToIR(schema *jsonschema.Schema) (*ir.IR, error) {
 		}
 		irUnion := convertDiscriminatedUnion(schema, union, unionName, &result.Types)
 		result.Types = append(result.Types, irUnion)
-		return result, nil
-	}
 
-	// Track which $defs names are used in discriminated unions to avoid duplicates
-	usedInUnions := make(map[string]bool)
+		// Mark all variant names and base types as used in unions
+		for _, v := range union.Variants {
+			usedInUnions[v.Name] = true
+			if v.BaseType != "" {
+				usedInUnions[v.BaseType] = true
+			}
+		}
+	}
 
 	// Process root-level named schemas from Extra field (e.g., RPCRequestToPlugin)
 	if schema.Extra != nil {
