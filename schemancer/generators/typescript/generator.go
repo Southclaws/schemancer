@@ -243,7 +243,11 @@ func makeTsTypeFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapping)
 					baseType = "unknown"
 				}
 			} else if ref.Array != nil {
-				baseType = tsType(ref.Array) + "[]"
+				elem := tsType(ref.Array)
+				if ref.Array.Nullable && ref.Array.Builtin != ir.IRBuiltinAny {
+					elem = "(" + elem + ")"
+				}
+				baseType = elem + "[]"
 			} else if ref.Map != nil {
 				baseType = "Record<string, " + tsType(ref.Map) + ">"
 			} else if ref.Name != "" {
@@ -253,11 +257,15 @@ func makeTsTypeFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapping)
 			}
 		}
 
+		// null is already assignable to unknown.
+		if ref.Nullable && baseType != "unknown" {
+			baseType += " | null"
+		}
+
 		return baseType
 	}
 	return tsType
 }
-
 
 const tsTemplate = `{{- define "brand" -}}
 declare const __brand: unique symbol;
