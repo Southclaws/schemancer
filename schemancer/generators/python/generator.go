@@ -91,9 +91,9 @@ func (g *Generator) Generate(data *ir.IR, opts generators.GeneratorOptions, genO
 	inheritedFields := computeInheritedFields(data.Types)
 
 	funcs := template.FuncMap{
-		"snake":          casing.ToSnakeCase,
-		"safeSnake":      safeSnake,
-		"fieldAlias":     fieldAlias,
+		"snake":      casing.ToSnakeCase,
+		"safeSnake":  safeSnake,
+		"fieldAlias": fieldAlias,
 		"isInheritedField": func(typeName, fieldJSONName string) bool {
 			if fields, ok := inheritedFields[typeName]; ok {
 				return fields[fieldJSONName]
@@ -387,7 +387,8 @@ func makePythonTypeFunc(formatMappings map[ir.IRFormat]generators.FormatTypeMapp
 			}
 		}
 
-		if !required {
+		// A nullable Any is just Any.
+		if !required || (ref.Nullable && baseType != "Any") {
 			return baseType + " | None"
 		}
 
@@ -537,7 +538,6 @@ func makePythonFieldFunc() func(*ir.IRTypeRef, bool, string) string {
 		return " = Field(" + strings.Join(parts, ", ") + ")"
 	}
 }
-
 
 const pythonTemplate = `from __future__ import annotations
 

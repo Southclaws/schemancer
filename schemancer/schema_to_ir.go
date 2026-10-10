@@ -646,6 +646,13 @@ func schemaToIRTypeRefWithContext(root *jsonschema.Schema, schema *jsonschema.Sc
 	}
 
 	if len(schema.AnyOf) > 0 || len(schema.OneOf) > 0 {
+		branches := schema.OneOf
+		if len(branches) == 0 {
+			branches = schema.AnyOf
+		}
+		if typeName, ok := nullableRefUnion(branches); ok {
+			return ir.IRTypeRef{Name: typeName, Nullable: true, Constraints: constraints}
+		}
 		return ir.IRTypeRef{Builtin: ir.IRBuiltinAny, Constraints: constraints}
 	}
 
@@ -686,6 +693,27 @@ func schemaToIRTypeRefWithContext(root *jsonschema.Schema, schema *jsonschema.Sc
 	// Multi-type or untyped: an "any", but preserve any format so a format
 	// mapping can still select a concrete type (IRFormatNone is a no-op).
 	return ir.IRTypeRef{Builtin: ir.IRBuiltinAny, Format: schemaFormatToIRFormat(schema.Format), Constraints: constraints}
+}
+
+// nullableRefUnion recognises a `oneOf`/`anyOf` of exactly two branches where
+// one is `{"type": "null"}` and the other is a bare `$ref`, and reports the
+// referenced type name.
+func nullableRefUnion(branches []*jsonschema.Schema) (string, bool) {
+	if len(branches) != 2 {
+		return "", false
+	}
+
+	var refBranch *jsonschema.Schema
+	if branches[0] != nil && branches[0].Type == "null" {
+		refBranch = branches[1]
+	} else if branches[1] != nil && branches[1].Type == "null" {
+		refBranch = branches[0]
+	}
+
+	if refBranch == nil || refBranch.Ref == "" {
+		return "", false
+	}
+	return refToTypeName(refBranch.Ref), true
 }
 
 // nullableScalarBuiltin reports the builtin for a `type: [T, "null"]` schema —
